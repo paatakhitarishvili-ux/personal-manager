@@ -264,7 +264,7 @@ select option{background:var(--bg3)}
   <div class="pw-inner">
     <div class="pw-logo">🔐</div>
     <div class="pw-title">Personal Manager</div>
-    <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:16px">V_1.3</div>
+    <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:16px">V_1.4</div>
     <div class="pw-sub" id="pwSub">შედი შენს ანგარიშში</div>
     <div class="pw-wrap" style="margin-bottom:10px">
       <input class="pw-inp" type="email" id="pwEmail" placeholder="ელ-ფოსტა" style="letter-spacing:normal">
@@ -361,12 +361,12 @@ select option{background:var(--bg3)}
     <div class="sc" id="actionsCard" style="display:none"><div class="sc-h"><div class="sc-t">✅ დასადასტურებელი ოპერაციები</div></div><div class="sc-b" id="actionsA"></div></div>
   </div>
   <div class="tb" id="tab-correction">
-    <div class="sc"><div class="sc-h"><div class="sc-t">💰 ყოველთვიური შემოსავლები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddMI')">+ დამატება</button></div><div class="sc-b" id="crrInc"></div></div>
-    <div class="sc"><div class="sc-h"><div class="sc-t">🏦 სესხები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddLoan')">+ დამატება</button></div><div class="sc-b" id="crrLoans"></div></div>
-    <div class="sc"><div class="sc-h"><div class="sc-t">📌 ფიქსირებული გასავლები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddFixed')">+ დამატება</button></div><div class="sc-b" id="crrFixed"></div></div>
-    <div class="sc"><div class="sc-h"><div class="sc-t">💡 კომუნალური — ამ თვეში</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddU')">+ დამატება</button></div><div class="sc-b" id="crrU"></div></div>
-    <div class="sc"><div class="sc-h"><div class="sc-t">⚡ ერთჯერადი შემოსავლები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddOTI')">+ დამატება</button></div><div class="sc-b" id="crrOTI"></div></div>
-    <div class="sc"><div class="sc-h"><div class="sc-t">💸 ერთჯერადი ხარჯები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddOTE')">+ დამატება</button></div><div class="sc-b" id="crrOTE"></div></div>
+    <div class="sc"><div class="sc-h"><div class="sc-t" data-i18n="monthly_income">💰 ყოველთვიური შემოსავლები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddMI')">+ დამატება</button></div><div class="sc-b" id="crrInc"></div></div>
+    <div class="sc"><div class="sc-h"><div class="sc-t" data-i18n="loans">🏦 სესხები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddLoan')">+ დამატება</button></div><div class="sc-b" id="crrLoans"></div></div>
+    <div class="sc"><div class="sc-h"><div class="sc-t" data-i18n="fixed_exp">📌 ფიქსირებული გასავლები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddFixed')">+ დამატება</button></div><div class="sc-b" id="crrFixed"></div></div>
+    <div class="sc"><div class="sc-h"><div class="sc-t" data-i18n="utilities">💡 კომუნალური — ამ თვეში</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddU')">+ დამატება</button></div><div class="sc-b" id="crrU"></div></div>
+    <div class="sc"><div class="sc-h"><div class="sc-t" data-i18n="one_time_inc">⚡ ერთჯერადი შემოსავლები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddOTI')">+ დამატება</button></div><div class="sc-b" id="crrOTI"></div></div>
+    <div class="sc"><div class="sc-h"><div class="sc-t" data-i18n="one_time_exp">💸 ერთჯერადი ხარჯები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddOTE')">+ დამატება</button></div><div class="sc-b" id="crrOTE"></div></div>
   </div>
   <div class="tb" id="tab-expenses">
     <div class="sc"><div class="sc-h"><div class="sc-t">🏦 სესხები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddLoan')">+ დამატება</button></div><div class="sc-b" id="expL"></div></div>
@@ -377,7 +377,7 @@ select option{background:var(--bg3)}
     </div>
   </div>
   <div class="tb" id="tab-purchases">
-    <div class="sc"><div class="sc-h"><div class="sc-t">🛒 დაგეგმილი შესყიდვები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddP')">+ დამატება</button></div><div class="sc-b" id="purA"></div></div>
+    <div class="sc"><div class="sc-h"><div class="sc-t" data-i18n="planned_purch">🛒 დაგეგმილი შესყიდვები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddP')">+ დამატება</button></div><div class="sc-b" id="purA"></div></div>
   </div>
   <div class="tb" id="tab-archive"><div id="archA"></div></div>
   <div class="tb" id="tab-settings">
@@ -385,7 +385,7 @@ select option{background:var(--bg3)}
       <div class="sr" style="cursor:default"><div class="srl">1 USD</div><div style="display:flex;align-items:center;gap:6px"><input type="number" id="cfg_usd" style="width:80px;text-align:right;padding:6px 8px" step="0.01" onchange="updateRate('usd',this.value)"><span style="font-size:13px;color:var(--text2)">₾</span></div></div>
       <div class="sr" style="cursor:default"><div class="srl">1 EUR</div><div style="display:flex;align-items:center;gap:6px"><input type="number" id="cfg_eur" style="width:80px;text-align:right;padding:6px 8px" step="0.01" onchange="updateRate('eur',this.value)"><span style="font-size:13px;color:var(--text2)">₾</span></div></div>
     </div>
-    <div class="ss"><div class="sst">ანგარიში</div>
+    <div class="ss"><div class="sst" data-i18n="account">ანგარიში</div>
       <div class="sr" style="cursor:default">
         <div><div class="srl" id="userNameDisplay">—</div><div style="font-size:11px;color:var(--text2)" id="userEmailDisplay">—</div></div>
       </div>
@@ -402,13 +402,13 @@ select option{background:var(--bg3)}
         </select>
       </div>
     </div>
-    <div class="ss"><div class="sst">შეტყობინებები</div>
+    <div class="ss"><div class="sst" data-i18n="notifications">შეტყობინებები</div>
       <div class="sr" onclick="requestNotifPermission()">
         <div><div class="srl">🔔 Push შეტყობინებები</div><div style="font-size:11px;color:var(--text2)" id="notifStatus">გამორთულია</div></div>
         <div class="srv" id="notifToggle">ჩართვა</div>
       </div>
     </div>
-    <div class="ss"><div class="sst">მონაცემების სარეზერვო ასლი</div>
+    <div class="ss"><div class="sst" data-i18n="data_backup">მონაცემების სარეზერვო ასლი</div>
       <div class="sr" onclick="exportData()">
         <div><div class="srl">📤 ექსპორტი</div><div style="font-size:11px;color:var(--text2)">ფაილში შენახვა (JSON)</div></div>
         <div class="srv">↓</div>
@@ -539,7 +539,7 @@ const LANGS = {
     fuel:'⛽ საწვავი', history:'📋 ისტორია',
     health:'❤️ მანქანის ჯანმრთელობა',
     mileage:'გარბენი', next_service:'შემდეგი სერვისი',
-    for_100:'100%-ისთვის საჭირო სერვისები:',
+    for_100:t('for_100'),
     // Settings
     account:'ანგარიში', security:'უსაფრთხოება',
     change_pw:'🔐 პაროლის შეცვლა', logout:'🚪 გამოსვლა',
@@ -651,31 +651,65 @@ function setLang(lang){
 
 function applyLang(){
   // bottom nav
-  const bnavLabels = {
-    bnavP: t('personal'), bnavM: t('meetings'),
-    bnavA: t('auto'), bnavF: t('idea')
-  };
+  const bnavLabels={bnavP:t('personal'),bnavM:t('meetings'),bnavA:t('auto'),bnavF:t('idea')};
   Object.entries(bnavLabels).forEach(([id,label])=>{
     const el=document.getElementById(id);
     if(el){const lbl=el.querySelector('.bnav-lbl');if(lbl)lbl.textContent=label;}
   });
-  // tabs in personal
+
+  // personal tabs
   const tabLabels=[t('main'),t('month'),t('expenses'),t('purchases'),t('archive'),t('settings')];
-  document.querySelectorAll('#scApp .tab').forEach((tab,i)=>{
-    if(tabLabels[i]) tab.textContent=tabLabels[i];
-  });
+  document.querySelectorAll('#scApp .tab').forEach((tab,i)=>{if(tabLabels[i])tab.textContent=tabLabels[i];});
+
   // meetings tabs
   const mTabLabels=[t('meet_main'),t('meet_all'),t('meet_archive')];
-  document.querySelectorAll('#sheetMeetings .tab').forEach((tab,i)=>{
-    if(mTabLabels[i]) tab.textContent=mTabLabels[i];
+  document.querySelectorAll('#sheetMeetings .tab').forEach((tab,i)=>{if(mTabLabels[i])tab.textContent=mTabLabels[i];});
+
+  // auto tabs - dashboard, services, fuel, history
+  const aTabLabels=[t('dashboard'),t('services'),t('fuel'),t('history')];
+  document.querySelectorAll('#sheetAuto .tab, #sheetCarDetail .tab').forEach((tab,i)=>{if(aTabLabels[i])tab.textContent=aTabLabels[i];});
+
+  // version labels
+  document.querySelectorAll('.ver-lbl').forEach(el=>el.textContent='Personal Manager V_1.4');
+
+  // auth screen
+  const pwSub=document.getElementById('pwSub');
+  if(pwSub&&pwSub.textContent===LANGS.ka.loading||pwSub&&pwSub.textContent==='შედი შენს ანგარიშში'){
+    // keep as is during loading
+  }
+
+  // section titles via data-i18n
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key=el.getAttribute('data-i18n');
+    el.textContent=t(key);
   });
-  // version label
-  document.querySelectorAll('.ver-lbl').forEach(el=>{
-    el.textContent='Personal Manager V_1.4';
-  });
-  // settings section titles
+
+  // language selector
   const langSel=document.getElementById('langSelector');
   if(langSel) langSel.value=currentLang;
+
+  // modal titles
+  const modalTitlesMap={
+    'mAddMI':{ka:'💰 შემოსავლის დამატება',en:'💰 Add Income',ru:'💰 Добавить доход'},
+    'mAddOTI':{ka:'⚡ ერთჯერადი შემოსავალი',en:'⚡ One-time Income',ru:'⚡ Разовый доход'},
+    'mAddOTE':{ka:'💸 ერთჯერადი ხარჯი',en:'💸 One-time Expense',ru:'💸 Разовый расход'},
+    'mAddP':{ka:'🛒 შესყიდვის დამატება',en:'🛒 Add Purchase',ru:'🛒 Добавить покупку'},
+    'mAddLoan':{ka:'🏦 სესხის დამატება',en:'🏦 Add Loan',ru:'🏦 Добавить кредит'},
+    'mAddFixed':{ka:'📌 ფიქსირებული ხარჯი',en:'📌 Add Fixed Expense',ru:'📌 Добавить расход'},
+    'mAddMeet':{ka:'📅 შეხვედრის დამატება',en:'📅 Add Meeting',ru:'📅 Добавить встречу'},
+    'modalQuickPay':{ka:'💸 სწრაფი გადახდა',en:'💸 Quick Payment',ru:'💸 Быстрый платёж'},
+    'mAddCar':{ka:'🚗 მანქანის დამატება',en:'🚗 Add Car',ru:'🚗 Добавить авто'},
+    'modalAddService':{ka:'🔧 სერვისის დამატება',en:'🔧 Add Service',ru:'🔧 Добавить сервис'},
+    'modalAddFuel':{ka:'⛽ საწვავის შეყვანა',en:'⛽ Add Fuel',ru:'⛽ Добавить топливо'},
+  };
+  Object.entries(modalTitlesMap).forEach(([id,titles])=>{
+    const modal=document.getElementById(id);
+    if(modal){const mt=modal.querySelector('.mt');if(mt)mt.textContent=titles[currentLang]||titles.ka;}
+  });
+
+  // quick pay button text
+  const qpBtns=document.querySelectorAll('button[onclick="openQuickPay()"] span');
+  qpBtns.forEach(sp=>{if(sp.textContent&&sp.textContent.length>3)sp.textContent=t('quick_pay');});
 }
 
 const GEO=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];
@@ -1308,7 +1342,7 @@ function renderCorr(){
   if(!db.setup) db.setup={monthlyIncomes:[],loans:[],utilities:[],fixedExpenses:[],currency:'GEL'};
   const md=getMD();
   const el1=document.getElementById('crrInc');
-  if(!(db.setup.monthlyIncomes||[]).length){el1.innerHTML='<div class="empty"><p>შემოსავლები არ არის</p></div>';}
+  if(!(db.setup.monthlyIncomes||[]).length){el1.innerHTML=('<div class="empty"><p>'+t('no_data')+'</p></div>');}
   else el1.innerHTML=db.setup.monthlyIncomes.map(i=>{
     const conf=md.ci[i.id],ov=md.oi&&md.oi[i.id]!==undefined?md.oi[i.id]:i.amount;
     const badge=conf===true?'<span class="badge bg-green">✓ დარიცხულია</span>':conf===false?'<span class="badge bg-red">✗ არ დარიცხულა</span>':'<span class="badge bg-amber">⏳ მოლოდინში</span>';
@@ -1343,10 +1377,10 @@ function renderCorr(){
   if(elCL){
     const loans=db.setup.loans||[];
     const mdL=getMD();
-    if(!loans.length) elCL.innerHTML='<div class="empty"><p>სესხები არ არის — დაამატე "გასავ." tab-ში</p></div>';
+    if(!loans.length) elCL.innerHTML=('<div class="empty"><p>'+t('no_data')+'</p></div>');
     else elCL.innerHTML=loans.map(l=>{
       const paid=mdL.loansPaid&&mdL.loansPaid[l.id];
-      return `<div class='li'><div class='li-l'><div class='li-ico' style='background:rgba(224,85,85,.1)'>🏦</div><div><div class='li-n'>${l.name}</div><div class='li-s'>${l.day?l.day+' რიცხვი':''}</div></div></div><div class='li-r'><div class='li-a red'>${fA(l.monthly,l.currency)}</div><button class='btn ${paid?"bg":"bs"}' style='margin-top:4px;padding:3px 8px;font-size:11px' onclick='toggleLoanPaid("${l.id}")'>${paid?'✓ გადახდილი':'გადახდა'}</button></div></div>`;
+      return `<div class='li'><div class='li-l'><div class='li-ico' style='background:rgba(224,85,85,.1)'>🏦</div><div><div class='li-n'>${l.name}</div><div class='li-s'>${l.day?l.day+' რიცხვი':''}</div></div></div><div class='li-r'><div class='li-a red'>${fA(l.monthly,l.currency)}</div><button class='btn ${paid?"bg":"bs"}' style='margin-top:4px;padding:3px 8px;font-size:11px' onclick='toggleLoanPaid("${l.id}")'>${paid?(currentLang==='en'?'✓ Paid':currentLang==='ru'?'✓ Оплачено':'✓ გადახდილი'):(currentLang==='en'?'Pay':currentLang==='ru'?'Оплатить':'გადახდა')}</button></div></div>`;
     }).join('');
   }
 
@@ -1355,10 +1389,10 @@ function renderCorr(){
   if(elCF){
     const fixed=db.setup.fixedExpenses||[];
     const mdF=getMD();
-    if(!fixed.length) elCF.innerHTML='<div class="empty"><p>ფიქსირებული ხარჯები არ არის — დაამატე "გასავ." tab-შ</p></div>';
+    if(!fixed.length) elCF.innerHTML=('<div class="empty"><p>'+t('no_data')+'</p></div>');
     else elCF.innerHTML=fixed.map(f=>{
       const paid=mdF.fixedPaid&&mdF.fixedPaid[f.id];
-      return `<div class='li'><div class='li-l'><div class='li-ico' style='background:rgba(155,109,255,.1)'>📌</div><div><div class='li-n'>${f.name}</div><div class='li-s'>${f.day?f.day+' რიცხვი':''}</div></div></div><div class='li-r'><div class='li-a red'>${fA(f.amount,f.currency)}</div><button class='btn ${paid?"bg":"bs"}' style='margin-top:4px;padding:3px 8px;font-size:11px' onclick='toggleFixedPaid("${f.id}")'>${paid?'✓ გადახდილი':'გადახდა'}</button></div></div>`;
+      return `<div class='li'><div class='li-l'><div class='li-ico' style='background:rgba(155,109,255,.1)'>📌</div><div><div class='li-n'>${f.name}</div><div class='li-s'>${f.day?f.day+' რიცხვი':''}</div></div></div><div class='li-r'><div class='li-a red'>${fA(f.amount,f.currency)}</div><button class='btn ${paid?"bg":"bs"}' style='margin-top:4px;padding:3px 8px;font-size:11px' onclick='toggleFixedPaid("${f.id}")'>${paid?(currentLang==='en'?'✓ Paid':currentLang==='ru'?'✓ Оплачено':'✓ გადახდილი'):(currentLang==='en'?'Pay':currentLang==='ru'?'Оплатить':'გადახდა')}</button></div></div>`;
     }).join('');
   }}
 
@@ -1875,9 +1909,9 @@ function renderMeetings(){
     let html=cal;
     if(!weekItems.length) html+=`<div class="empty" style="padding-top:10px"><div class="empty-i">📅</div><p>მომდევნო 7 დღეში შეხვედრები არ არის</p></div>`;
     else{
-      if(todayM.length) html+=`<div class="meet-hdr">📍 დღეს</div>`+todayM.map(m=>meetCard(m,typeInfo,today,true)).join('');
-      if(futureM.length) html+=`<div class="meet-hdr">📆 მომდევნო 7 დღე</div>`+futureM.map(m=>meetCard(m,typeInfo,today,false)).join('');
-      if(flexM.length) html+=`<div class="meet-hdr">🔄 მოქნილი</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
+      if(todayM.length) html+=`<div class="meet-hdr">${t("today")}</div>`+todayM.map(m=>meetCard(m,typeInfo,today,true)).join('');
+      if(futureM.length) html+=`<div class="meet-hdr">${t("next7")}</div>`+futureM.map(m=>meetCard(m,typeInfo,today,false)).join('');
+      if(flexM.length) html+=`<div class="meet-hdr">${t("flexible")}</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
     }
     el.innerHTML=html;
     // add click handlers for calendar days
@@ -1900,9 +1934,9 @@ function renderMeetings(){
       else flexM.push(m);
     });
     let html='';
-    if(todayM.length) html+=`<div class="meet-hdr">📍 დღეს</div>`+todayM.map(m=>meetCard(m,typeInfo,today,true)).join('');
-    if(futureM.length) html+=`<div class="meet-hdr">📆 მომავალი</div>`+futureM.map(m=>meetCard(m,typeInfo,today,false)).join('');
-    if(flexM.length) html+=`<div class="meet-hdr">🔄 მოქნილი</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
+    if(todayM.length) html+=`<div class="meet-hdr">${t("today")}</div>`+todayM.map(m=>meetCard(m,typeInfo,today,true)).join('');
+    if(futureM.length) html+=`<div class="meet-hdr">${t("next7")}</div>`+futureM.map(m=>meetCard(m,typeInfo,today,false)).join('');
+    if(flexM.length) html+=`<div class="meet-hdr">${t("flexible")}</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
     el.innerHTML=html;
 
   } else if(tabId==='mtab-archive'){
