@@ -6,6 +6,16 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0f1117">
 <title>პირადი მენეჯერი</title>
+<script>
+window.addEventListener('error', function(e){
+  document.body.style.background='#1a0000';
+  document.body.innerHTML='<div style="color:#ff6b6b;padding:20px;font-family:monospace;font-size:13px;word-break:break-all"><b>JS ERROR:</b><br>'+e.message+'<br><br>File: '+e.filename+'<br>Line: '+e.lineno+'<br>Col: '+e.colno+'</div>';
+});
+window.addEventListener('unhandledrejection', function(e){
+  document.body.style.background='#1a0000';
+  document.body.innerHTML='<div style="color:#ff6b6b;padding:20px;font-family:monospace;font-size:13px;word-break:break-all"><b>PROMISE ERROR:</b><br>'+e.reason+'</div>';
+});
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--bg:#0f1117;--bg2:#181c27;--bg3:#1e2333;--card:#232840;--border:#2e3552;--text:#e8eaf6;--text2:#8892b0;--text3:#4a5580;--accent:#4f8ef7;--accent2:#3d7af5;--green:#2ecc88;--red:#e05555;--amber:#f0a830;--purple:#9b6dff;--r:14px;--rs:8px}
@@ -539,7 +549,7 @@ const LANGS = {
     fuel:'⛽ საწვავი', history:'📋 ისტორია',
     health:'❤️ მანქანის ჯანმრთელობა',
     mileage:'გარბენი', next_service:'შემდეგი სერვისი',
-    for_100:t('for_100'),
+    for_100:tr('for_100'),
     // Settings
     account:'ანგარიში', security:'უსაფრთხოება',
     change_pw:'🔐 პაროლის შეცვლა', logout:'🚪 გამოსვლა',
@@ -681,7 +691,7 @@ function applyLang(){
   // section titles via data-i18n
   document.querySelectorAll('[data-i18n]').forEach(el=>{
     const key=el.getAttribute('data-i18n');
-    el.textContent=t(key);
+    el.textContent=tr(key);
   });
 
   // language selector
@@ -1167,11 +1177,11 @@ function renderAll(){
 
   const mlblEl=document.getElementById('mlbl');
   if(mlblEl) mlblEl.textContent=GEO[cM]+' '+cY;
-  const t=calcTotals();
-  document.getElementById('bNum').textContent=fG(t.balance);
-  document.getElementById('bIn').textContent=fG(t.income);
-  document.getElementById('bOut').textContent=fG(t.expense);
-  renderNotifs();renderChart(t);renderUpcoming();
+  const tots=calcTotals();
+  document.getElementById('bNum').textContent=fG(tots.balance);
+  document.getElementById('bIn').textContent=fG(tots.income);
+  document.getElementById('bOut').textContent=fG(tots.expense);
+  renderNotifs();renderChart(tots);renderUpcoming();
   renderCorr();renderExp();renderPaidArchive();renderPurch();renderArch();
 }
 
@@ -1910,7 +1920,7 @@ function renderMeetings(){
     if(!weekItems.length) html+=`<div class="empty" style="padding-top:10px"><div class="empty-i">📅</div><p>მომდევნო 7 დღეში შეხვედრები არ არის</p></div>`;
     else{
       if(todayM.length) html+=`<div class="meet-hdr">${tr("today")}</div>`+todayM.map(m=>meetCard(m,typeInfo,today,true)).join('');
-      if(futureM.length) html+=`<div class="meet-hdr">${t("next7")}</div>`+futureM.map(m=>meetCard(m,typeInfo,today,false)).join('');
+      if(futureM.length) html+=`<div class="meet-hdr">${tr("next7")}</div>`+futureM.map(m=>meetCard(m,typeInfo,today,false)).join('');
       if(flexM.length) html+=`<div class="meet-hdr">${tr("flexible")}</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
     }
     el.innerHTML=html;
@@ -1935,7 +1945,7 @@ function renderMeetings(){
     });
     let html='';
     if(todayM.length) html+=`<div class="meet-hdr">${tr("today")}</div>`+todayM.map(m=>meetCard(m,typeInfo,today,true)).join('');
-    if(futureM.length) html+=`<div class="meet-hdr">${t("next7")}</div>`+futureM.map(m=>meetCard(m,typeInfo,today,false)).join('');
+    if(futureM.length) html+=`<div class="meet-hdr">${tr("next7")}</div>`+futureM.map(m=>meetCard(m,typeInfo,today,false)).join('');
     if(flexM.length) html+=`<div class="meet-hdr">${tr("flexible")}</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
     el.innerHTML=html;
 
