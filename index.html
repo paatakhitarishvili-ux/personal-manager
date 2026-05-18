@@ -326,7 +326,7 @@ select option{background:var(--bg3)}
   <div class="app-hd">
     <div>
       <div class="app-t">📊 მენეჯერი</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.3</button>
+      <button onclick="openM('modalChangelog')" class="ver-lbl" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.4</button>
     </div>
     <div class="mnav">
       <button onclick="changeMonth(-1)">‹</button>
@@ -391,6 +391,16 @@ select option{background:var(--bg3)}
       </div>
       <div class="sr" onclick="changePw()"><div class="srl">🔐 პაროლის შეცვლა</div><div class="srv">→</div></div>
       <div class="sr" onclick="fbLogout()"><div class="srl" style="color:var(--red)">🚪 გამოსვლა</div><div class="srv" style="color:var(--red)">→</div></div>
+    </div>
+    <div class="ss"><div class="sst">🌐 ენა / Language / Язык</div>
+      <div class="sr">
+        <div class="srl">ენა</div>
+        <select id="langSelector" onchange="setLang(this.value)" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:13px;padding:6px 10px;font-family:inherit">
+          <option value="ka">🇬🇪 ქართული</option>
+          <option value="en">🇬🇧 English</option>
+          <option value="ru">🇷🇺 Русский</option>
+        </select>
+      </div>
     </div>
     <div class="ss"><div class="sst">შეტყობინებები</div>
       <div class="sr" onclick="requestNotifPermission()">
@@ -498,6 +508,176 @@ select option{background:var(--bg3)}
 </div>
 
 <script>
+
+// ══════════════════════════════════════════
+// TRANSLATIONS V_1.4
+// ══════════════════════════════════════════
+const LANGS = {
+  ka: {
+    // Nav
+    personal:'პირადი', meetings:'შეხვედრები', auto:'ავტო', idea:'იდეა',
+    // Personal
+    manager:'მენეჯერი', main:'მთავარი', month:'თვე', expenses:'გასავ.',
+    purchases:'შესყიდ.', archive:'არქივი', settings:'⚙️',
+    balance:'ბალანსი', income:'შემოსავალი', expense:'გასავალი',
+    quick_pay:'სწრაფი გადახდა',
+    monthly_income:'ყოველთვიური შემოსავლები',
+    loans:'სესხები', fixed_exp:'ფიქსირებული გასავლები',
+    utilities:'კომუნალური — ამ თვეში',
+    one_time_inc:'ერთჯერადი შემოსავლები',
+    one_time_exp:'ერთჯერადი ხარჯები',
+    planned_purch:'დაგეგმილი შესყიდვები',
+    add:'+ დამატება', save:'✓ შენახვა', cancel:'გაუქმება',
+    delete:'წაშლა', close:'დახურვა',
+    name:'სახელი', amount:'თანხა', currency:'ვალუტა', date:'თარიღი',
+    day:'რიცხვი', note:'შენიშვნა',
+    // Meetings
+    meet_main:'მთავარი', meet_all:'ყველა', meet_archive:'არქივი',
+    today:'📍 დღეს', next7:'📆 მომდევნო 7 დღე', flexible:'🔄 მოქნილი',
+    // Auto
+    dashboard:'📊 დეშბორდი', services:'🔧 სერვისები',
+    fuel:'⛽ საწვავი', history:'📋 ისტორია',
+    health:'❤️ მანქანის ჯანმრთელობა',
+    mileage:'გარბენი', next_service:'შემდეგი სერვისი',
+    for_100:'100%-ისთვის საჭირო სერვისები:',
+    // Settings
+    account:'ანგარიში', security:'უსაფრთხოება',
+    change_pw:'🔐 პაროლის შეცვლა', logout:'🚪 გამოსვლა',
+    notifications:'შეტყობინებები', push_notif:'🔔 Push შეტყობინებები',
+    enabled:'ჩართულია ✅', disabled:'გამორთულია', enable:'ჩართვა',
+    data_backup:'მონაცემების სარეზერვო ასლი',
+    export:'📤 ექსპორტი', import:'📥 იმპორტი',
+    language:'🌐 ენა', reset:'🗑 გადატვირთვა',
+    // Feedback
+    feedback_title:'შეცდომა / იდეა',
+    topic:'თემა', type:'ტიპი', description:'აღწერა',
+    send:'გაგზავნა',
+    // Common
+    no_data:'მონაცემი არ არის', loading:'იტვირთება...',
+    confirm_delete:'დარწმუნებული ხარ?', yes:'კი', no:'არა',
+    saved:'✅ შენახულია', deleted:'🗑 წაიშალა', added:'✅ დამატებულია',
+    error:'⚠️ შეცდომა', success:'✅ წარმატება',
+    version:'ვერსია',
+  },
+  en: {
+    personal:'Personal', meetings:'Meetings', auto:'Auto', idea:'Ideas',
+    manager:'Manager', main:'Main', month:'Month', expenses:'Expenses',
+    purchases:'Purchases', archive:'Archive', settings:'⚙️',
+    balance:'Balance', income:'Income', expense:'Expense',
+    quick_pay:'Quick Payment',
+    monthly_income:'Monthly Income',
+    loans:'Loans', fixed_exp:'Fixed Expenses',
+    utilities:'Utilities — This Month',
+    one_time_inc:'One-time Income',
+    one_time_exp:'One-time Expenses',
+    planned_purch:'Planned Purchases',
+    add:'+ Add', save:'✓ Save', cancel:'Cancel',
+    delete:'Delete', close:'Close',
+    name:'Name', amount:'Amount', currency:'Currency', date:'Date',
+    day:'Day', note:'Note',
+    meet_main:'Main', meet_all:'All', meet_archive:'Archive',
+    today:'📍 Today', next7:'📆 Next 7 Days', flexible:'🔄 Flexible',
+    dashboard:'📊 Dashboard', services:'🔧 Services',
+    fuel:'⛽ Fuel', history:'📋 History',
+    health:'❤️ Car Health',
+    mileage:'Mileage', next_service:'Next Service',
+    for_100:'Required for 100%:',
+    account:'Account', security:'Security',
+    change_pw:'🔐 Change Password', logout:'🚪 Logout',
+    notifications:'Notifications', push_notif:'🔔 Push Notifications',
+    enabled:'Enabled ✅', disabled:'Disabled', enable:'Enable',
+    data_backup:'Data Backup',
+    export:'📤 Export', import:'📥 Import',
+    language:'🌐 Language', reset:'🗑 Reset',
+    feedback_title:'Bugs / Ideas',
+    topic:'Topic', type:'Type', description:'Description',
+    send:'Send',
+    no_data:'No data', loading:'Loading...',
+    confirm_delete:'Are you sure?', yes:'Yes', no:'No',
+    saved:'✅ Saved', deleted:'🗑 Deleted', added:'✅ Added',
+    error:'⚠️ Error', success:'✅ Success',
+    version:'Version',
+  },
+  ru: {
+    personal:'Личное', meetings:'Встречи', auto:'Авто', idea:'Идеи',
+    manager:'Менеджер', main:'Главная', month:'Месяц', expenses:'Расходы',
+    purchases:'Покупки', archive:'Архив', settings:'⚙️',
+    balance:'Баланс', income:'Доход', expense:'Расход',
+    quick_pay:'Быстрый платёж',
+    monthly_income:'Ежемесячный доход',
+    loans:'Кредиты', fixed_exp:'Постоянные расходы',
+    utilities:'Коммунальные — этот месяц',
+    one_time_inc:'Разовый доход',
+    one_time_exp:'Разовые расходы',
+    planned_purch:'Запланированные покупки',
+    add:'+ Добавить', save:'✓ Сохранить', cancel:'Отмена',
+    delete:'Удалить', close:'Закрыть',
+    name:'Название', amount:'Сумма', currency:'Валюта', date:'Дата',
+    day:'Число', note:'Заметка',
+    meet_main:'Главная', meet_all:'Все', meet_archive:'Архив',
+    today:'📍 Сегодня', next7:'📆 Следующие 7 дней', flexible:'🔄 Гибко',
+    dashboard:'📊 Панель', services:'🔧 Сервисы',
+    fuel:'⛽ Топливо', history:'📋 История',
+    health:'❤️ Здоровье авто',
+    mileage:'Пробег', next_service:'Следующий сервис',
+    for_100:'Для 100% необходимо:',
+    account:'Аккаунт', security:'Безопасность',
+    change_pw:'🔐 Изменить пароль', logout:'🚪 Выйти',
+    notifications:'Уведомления', push_notif:'🔔 Push уведомления',
+    enabled:'Включено ✅', disabled:'Отключено', enable:'Включить',
+    data_backup:'Резервная копия данных',
+    export:'📤 Экспорт', import:'📥 Импорт',
+    language:'🌐 Язык', reset:'🗑 Сброс',
+    feedback_title:'Ошибки / Идеи',
+    topic:'Тема', type:'Тип', description:'Описание',
+    send:'Отправить',
+    no_data:'Нет данных', loading:'Загрузка...',
+    confirm_delete:'Вы уверены?', yes:'Да', no:'Нет',
+    saved:'✅ Сохранено', deleted:'🗑 Удалено', added:'✅ Добавлено',
+    error:'⚠️ Ошибка', success:'✅ Успешно',
+    version:'Версия',
+  }
+};
+
+let currentLang = 'ka';
+function t(key){ return (LANGS[currentLang]||LANGS.ka)[key] || (LANGS.ka)[key] || key; }
+function setLang(lang){
+  currentLang = lang;
+  db.lang = lang;
+  save();
+  applyLang();
+  renderAll();
+}
+
+function applyLang(){
+  // bottom nav
+  const bnavLabels = {
+    bnavP: t('personal'), bnavM: t('meetings'),
+    bnavA: t('auto'), bnavF: t('idea')
+  };
+  Object.entries(bnavLabels).forEach(([id,label])=>{
+    const el=document.getElementById(id);
+    if(el){const lbl=el.querySelector('.bnav-lbl');if(lbl)lbl.textContent=label;}
+  });
+  // tabs in personal
+  const tabLabels=[t('main'),t('month'),t('expenses'),t('purchases'),t('archive'),t('settings')];
+  document.querySelectorAll('#scApp .tab').forEach((tab,i)=>{
+    if(tabLabels[i]) tab.textContent=tabLabels[i];
+  });
+  // meetings tabs
+  const mTabLabels=[t('meet_main'),t('meet_all'),t('meet_archive')];
+  document.querySelectorAll('#sheetMeetings .tab').forEach((tab,i)=>{
+    if(mTabLabels[i]) tab.textContent=mTabLabels[i];
+  });
+  // version label
+  document.querySelectorAll('.ver-lbl').forEach(el=>{
+    el.textContent='Personal Manager V_1.4';
+  });
+  // settings section titles
+  const langSel=document.getElementById('langSelector');
+  if(langSel) langSel.value=currentLang;
+}
+
 const GEO=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];
 const CS={GEL:'₾',USD:'$',EUR:'€'};
 const DAYS=Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('');
@@ -759,6 +939,9 @@ function enterApp(){
   // reset to current month
   cY=new Date().getFullYear();
   cM=new Date().getMonth();
+  // apply saved language
+  if(db.lang) currentLang=db.lang;
+  applyLang();
 
   updateSetInputs();
   renderAll();
@@ -3116,7 +3299,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">📅 შეხვედრები</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.3</button>
+      <button onclick="openM('modalChangelog')" class="ver-lbl" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.4</button>
     </div>
     <button class="btn bok" style="padding:7px 14px;font-size:13px" onclick="openM('mAddMeet')">+ დამატება</button>
   </div>
@@ -3135,7 +3318,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">🚗 ავტო</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.3</button>
+      <button onclick="openM('modalChangelog')" class="ver-lbl" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.4</button>
     </div>
     <button class="btn bok" style="padding:7px 14px;font-size:13px" onclick="openAddCarModal()">+ მანქანა</button>
   </div>
@@ -3390,7 +3573,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">💡 შეცდომა / იდეა</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.3</button>
+      <button onclick="openM('modalChangelog')" class="ver-lbl" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.4</button>
     </div>
     <button onclick="openM('modalChangelog')" style="background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);color:var(--accent);border-radius:20px;font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer;font-family:inherit">📋 ვერსიები</button>
   </div>
@@ -3509,17 +3692,36 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
 
     <div style="background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.25);border-radius:var(--r);padding:14px;margin-bottom:12px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:15px;font-weight:700;color:var(--accent)">V_1.3 — მიმდინარე</div>
+        <div style="font-size:15px;font-weight:700;color:var(--accent)">V_1.4 — მიმდინარე</div>
         <span class="badge b-green">ახალი</span>
       </div>
       <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        ✅ 3 ენა — 🇬🇪 ქართული, 🇬🇧 English, 🇷🇺 Русский<br>
+        ✅ Firebase Auth — რეგისტრაცია, შესვლა, პაროლის აღდგენა<br>
+        ✅ Firestore Cloud — მონაცემები ნებისმიერი მოწყობილობიდან<br>
+        ✅ GitHub Pages — PWA (Home Screen-ზე დამატება)<br>
+        ✅ შეხვედრების კალენდარი — დაგეგმილი დღეები მონიშნულია<br>
+        ✅ კალენდარის დღეზე დაჭერა — იმ დღის შეხვედრები<br>
+        ✅ ვადაგასული შეხვედრები — შედგა/გადაიდო popup<br>
+        ✅ ავტოს ჯანმრთელობა — მხოლოდ უახლესი სერვისი ითვლება<br>
+        ✅ 100%-ისთვის საჭირო სერვისების სია<br>
+        ✅ სერვისის შეცვლისას ძველი ავტომატურად არქივში<br>
+        ✅ სესხები და ფიქსირებული ხარჯები — "თვის" tab-ში<br>
+        ✅ გადახდის სტატუსი — "გადახდილი/გადახდა" ღილაკი<br>
+        ✅ სწრაფი გადახდა — მთავარ გვერდზე<br>
+        🐛 მონაცემების შენახვის პრობლემა გამოსწორდა<br>
+        🐛 თვის მაჩვენებელი ყოველთვის ჩანს<br>
+        🐛 Firestore Rules — ვადაგასული წესები შეიცვალა
+      </div>
+    </div>
+
+    <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">V_1.3</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
         ✅ ავტოს მოდული — სერვისები, საწვავი, ისტორია<br>
         ✅ შეხვედრების მოდული — პირადი, ჯგუფური, ქეიფი<br>
-        ✅ ქეიფის შაბლონი — მონაწილეები + პროდუქტები<br>
         ✅ სწრაფი გადახდა — 12 შაბლონი<br>
         ✅ ექსპორტი / იმპორტი<br>
-        ✅ გადახდილი ხარჯების არქივი<br>
-        ✅ ვერსიის მაჩვენებელი<br>
         🐛 ნავიგაციის გამოსწორება
       </div>
     </div>
