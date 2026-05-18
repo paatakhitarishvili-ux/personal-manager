@@ -2501,7 +2501,11 @@ async function submitForgot(){
   const err=document.getElementById('forgot_err');
   if(!email){err.textContent='შეიყვანე ელ-ფოსტა';err.style.display='block';return;}
   try{
-    await window._fbAuth.sendPasswordResetEmail(email);
+    const actionCodeSettings = {
+      url: 'https://paatakhitarishvili-ux.github.io/personal-manager/',
+      handleCodeInApp: true
+    };
+    await window._fbAuth.sendPasswordResetEmail(email, actionCodeSettings);
     showLogin();
     showToast('✅ პაროლის აღდგენის ბმული გაიგზავნა!');
   }catch(e){
