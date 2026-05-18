@@ -362,6 +362,8 @@ select option{background:var(--bg3)}
   </div>
   <div class="tb" id="tab-correction">
     <div class="sc"><div class="sc-h"><div class="sc-t">💰 ყოველთვიური შემოსავლები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddMI')">+ დამატება</button></div><div class="sc-b" id="crrInc"></div></div>
+    <div class="sc"><div class="sc-h"><div class="sc-t">🏦 სესხები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddLoan')">+ დამატება</button></div><div class="sc-b" id="crrLoans"></div></div>
+    <div class="sc"><div class="sc-h"><div class="sc-t">📌 ფიქსირებული გასავლები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddFixed')">+ დამატება</button></div><div class="sc-b" id="crrFixed"></div></div>
     <div class="sc"><div class="sc-h"><div class="sc-t">💡 კომუნალური — ამ თვეში</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddU')">+ დამატება</button></div><div class="sc-b" id="crrU"></div></div>
     <div class="sc"><div class="sc-h"><div class="sc-t">⚡ ერთჯერადი შემოსავლები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddOTI')">+ დამატება</button></div><div class="sc-b" id="crrOTI"></div></div>
     <div class="sc"><div class="sc-h"><div class="sc-t">💸 ერთჯერადი ხარჯები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddOTE')">+ დამატება</button></div><div class="sc-b" id="crrOTE"></div></div>
@@ -1144,7 +1146,31 @@ function renderCorr(){
   const el4=document.getElementById('crrOTE');
   if(!(md.ote||[]).length)el4.innerHTML='<div class="empty"><div class="empty-i">💸</div><p>ერთჯერადი ხარჯი არ არის</p></div>';
   else el4.innerHTML=(md.ote||[]).map((x,i)=>`<div class="li"><div class="li-l"><div class="li-ico" style="background:rgba(224,85,85,.1)">💸</div><div><div class="li-n">${x.name}</div><div class="li-s">${x.date||''}</div></div></div><div class="li-r"><div class="li-a red">${fA(x.amount,x.currency)}</div><button class="btn bdel" style="margin-top:4px;padding:3px 8px" onclick="delOTE(${i})">წაშლა</button></div></div>`).join('');
-}
+
+
+  // LOANS in correction tab
+  const elCL=document.getElementById('crrLoans');
+  if(elCL){
+    const loans=db.setup.loans||[];
+    const mdL=getMD();
+    if(!loans.length) elCL.innerHTML='<div class="empty"><p>სესხები არ არის — დაამატე "გასავ." tab-ში</p></div>';
+    else elCL.innerHTML=loans.map(l=>{
+      const paid=mdL.loansPaid&&mdL.loansPaid[l.id];
+      return '<div class="li"><div class="li-l"><div class="li-ico" style="background:rgba(224,85,85,.1)">🏦</div><div><div class="li-n">'+l.name+'</div><div class="li-s">'+(l.day?l.day+' რიცხვი':'')+'</div></div></div><div class="li-r"><div class="li-a red">'+fA(l.monthly,l.currency)+'</div><button class="btn '+(paid?'bg':'bs')+'" style="margin-top:4px;padding:3px 8px;font-size:11px" onclick="toggleLoanPaid(''+l.id+'')">'+( paid?'✓ გადახდილი':'გადახდა')+'</button></div></div>';
+    }).join('');
+  }
+
+  // FIXED in correction tab
+  const elCF=document.getElementById('crrFixed');
+  if(elCF){
+    const fixed=db.setup.fixedExpenses||[];
+    const mdF=getMD();
+    if(!fixed.length) elCF.innerHTML='<div class="empty"><p>ფიქსირებული ხარჯები არ არის — დაამატე "გასავ." tab-შ</p></div>';
+    else elCF.innerHTML=fixed.map(f=>{
+      const paid=mdF.fixedPaid&&mdF.fixedPaid[f.id];
+      return '<div class="li"><div class="li-l"><div class="li-ico" style="background:rgba(155,109,255,.1)">📌</div><div><div class="li-n">'+f.name+'</div><div class="li-s">'+(f.day?f.day+' რიცხვი':'')+'</div></div></div><div class="li-r"><div class="li-a red">'+fA(f.amount,f.currency)+'</div><button class="btn '+(paid?'bg':'bs')+'" style="margin-top:4px;padding:3px 8px;font-size:11px" onclick="toggleFixedPaid(''+f.id+'')">'+( paid?'✓ გადახდილი':'გადახდა')+'</button></div></div>';
+    }).join('');
+  }}
 
 function saveOI(id){
   const md=getMD();if(!md.oi)md.oi={};
@@ -2797,6 +2823,58 @@ function saveFixedModal(){
   save();closeM('mAddFixed');renderAll();showToast('✅ ფიქსირებული ხარჯი დამატებულია');
 }
 
+
+function toggleLoanPaid(id){
+  const md=getMD();
+  if(!md.loansPaid) md.loansPaid={};
+  if(md.loansPaid[id]) delete md.loansPaid[id];
+  else md.loansPaid[id]=true;
+  save();renderAll();
+}
+
+function toggleFixedPaid(id){
+  const md=getMD();
+  if(!md.fixedPaid) md.fixedPaid={};
+  if(md.fixedPaid[id]) delete md.fixedPaid[id];
+  else md.fixedPaid[id]=true;
+  save();renderAll();
+}
+
+function delLoanFromApp(id){
+  showDel(()=>{
+    db.setup.loans=db.setup.loans.filter(l=>l.id!==id);
+    save();renderAll();showToast('🗑 სესხი წაიშალა');
+  });
+}
+
+function delFixedFromApp(id){
+  showDel(()=>{
+    db.setup.fixedExpenses=db.setup.fixedExpenses.filter(f=>f.id!==id);
+    save();renderAll();showToast('🗑 ხარჯი წაიშალა');
+  });
+}
+
+
+function toggleLoanPaid(id){
+  const md=getMD();
+  if(!md.loansPaid) md.loansPaid={};
+  if(md.loansPaid[id]) delete md.loansPaid[id];
+  else md.loansPaid[id]=true;
+  save();renderAll();
+}
+function toggleFixedPaid(id){
+  const md=getMD();
+  if(!md.fixedPaid) md.fixedPaid={};
+  if(md.fixedPaid[id]) delete md.fixedPaid[id];
+  else md.fixedPaid[id]=true;
+  save();renderAll();
+}
+function delLoanFromApp(id){
+  showDel(()=>{db.setup.loans=db.setup.loans.filter(l=>l.id!==id);save();renderAll();showToast('🗑 წაიშალა');});
+}
+function delFixedFromApp(id){
+  showDel(()=>{db.setup.fixedExpenses=db.setup.fixedExpenses.filter(f=>f.id!==id);save();renderAll();showToast('🗑 წაიშალა');});
+}
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 </script>
 
