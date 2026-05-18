@@ -1886,7 +1886,6 @@ function openCarDetail(carId){
 }
 
 function getCarById(id){return(db.cars||[]).find(c=>c.id===id);}
-function getCarServices(carId){return(db.carServices||[]).filter(s=>s.carId===carId);}
 function getCarFuels(carId){return(db.carFuels||[]).filter(f=>f.carId===carId);}
 
 // ── SAVE CAR ──
@@ -2821,37 +2820,6 @@ function saveFixedModal(){
   if(!db.setup.fixedExpenses) db.setup.fixedExpenses=[];
   db.setup.fixedExpenses.push({id:'fx_'+Date.now(),name,amount:amt,currency:cur,day});
   save();closeM('mAddFixed');renderAll();showToast('✅ ფიქსირებული ხარჯი დამატებულია');
-}
-
-
-function toggleLoanPaid(id){
-  const md=getMD();
-  if(!md.loansPaid) md.loansPaid={};
-  if(md.loansPaid[id]) delete md.loansPaid[id];
-  else md.loansPaid[id]=true;
-  save();renderAll();
-}
-
-function toggleFixedPaid(id){
-  const md=getMD();
-  if(!md.fixedPaid) md.fixedPaid={};
-  if(md.fixedPaid[id]) delete md.fixedPaid[id];
-  else md.fixedPaid[id]=true;
-  save();renderAll();
-}
-
-function delLoanFromApp(id){
-  showDel(()=>{
-    db.setup.loans=db.setup.loans.filter(l=>l.id!==id);
-    save();renderAll();showToast('🗑 სესხი წაიშალა');
-  });
-}
-
-function delFixedFromApp(id){
-  showDel(()=>{
-    db.setup.fixedExpenses=db.setup.fixedExpenses.filter(f=>f.id!==id);
-    save();renderAll();showToast('🗑 ხარჯი წაიშალა');
-  });
 }
 
 
