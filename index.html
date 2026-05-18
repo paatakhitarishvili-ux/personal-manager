@@ -2193,7 +2193,7 @@ function getSvcStatus(svc,carMileage){
 
 function getCarHealth(carId){
   const car=getCarById(carId);if(!car) return 100;
-  const svcs=getCarServices(carId);
+  const svcs=getActiveServices(carId);
   if(!svcs.length) return 100;
   let score=0,count=0;
   svcs.forEach(s=>{
@@ -2240,8 +2240,9 @@ function carCard(car,isArchive=false){
   const health=getCarHealth(car.id);
   const healthColor=health>=80?'var(--green)':health>=50?'var(--amber)':'var(--red)';
   const svcs=getCarServices(car.id);
-  const dueSvcs=svcs.filter(s=>getSvcStatus(s,car.mileage).status==='due').length;
-  const warnSvcs=svcs.filter(s=>getSvcStatus(s,car.mileage).status==='warn').length;
+  const activeSvcsCard=getActiveServices(car.id);
+  const dueSvcs=activeSvcsCard.filter(s=>getSvcStatus(s,car.mileage).status==='due').length;
+  const warnSvcs=activeSvcsCard.filter(s=>getSvcStatus(s,car.mileage).status==='warn').length;
   
   return `<div class="car-card" onclick="openCarDetail('${car.id}')">
     <div class="car-card-top">
@@ -2288,12 +2289,16 @@ function renderDashboard(car){
   const health=getCarHealth(car.id);
   const healthColor=health>=80?'var(--green)':health>=50?'var(--amber)':'var(--red)';
   const svcs=getCarServices(car.id);
-  const dueSvcs=svcs.filter(s=>getSvcStatus(s,car.mileage).status==='due');
-  const warnSvcs=svcs.filter(s=>getSvcStatus(s,car.mileage).status==='warn');
+  const activeSvcs=getActiveServices(car.id);
+  const dueSvcs=activeSvcs.filter(s=>getSvcStatus(s,car.mileage).status==='due');
+  const warnSvcs=activeSvcs.filter(s=>getSvcStatus(s,car.mileage).status==='warn');
   const totalCost=svcs.reduce((s,x)=>s+toGEL(x.cost||0,(x.currency||'GEL')),0);
   const fuels=getCarFuels(car.id);
   const totalFuel=fuels.reduce((s,f)=>s+(parseFloat(f.total)||0),0);
   
+  // what needs fixing for 100%
+  const needFix=getActiveServices(car.id).filter(s=>getSvcStatus(s,car.mileage).status==='due'||getSvcStatus(s,car.mileage).status==='warn');
+
   let html=`
   <!-- Health Score -->
   <div class="bal" style="margin-bottom:12px">
@@ -2304,6 +2309,10 @@ function renderDashboard(car){
       <span style="font-size:11px;color:var(--text2)">${car.make} ${car.model} · ${car.year||''}</span>
       <span style="font-size:11px;color:var(--text2)">${FUEL_LABELS[car.fuel]||''}</span>
     </div>
+    ${needFix.length&&health<100?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)">
+      <div style="font-size:11px;color:var(--text2);font-weight:700;margin-bottom:6px">100%-ისთვის საჭირო სერვისები:</div>
+      ${needFix.map(s=>{const st=getSvcStatus(s,car.mileage);return '<div style="font-size:12px;padding:2px 0;color:'+(st.status==="due"?"var(--red)":"var(--amber)")+'">'+(st.status==="due"?"🔴 ":"🟡 ")+s.name+'</div>';}).join('')}
+    </div>`:''}
   </div>
 
   <!-- Mileage Card -->
@@ -2847,7 +2856,23 @@ function scheduleLocalNotifications(){
 }
 
 function getCarServices(carId){
-  return (db.carServices||[]).filter(s=>s.carId===carId);
+  const all=(db.carServices||[]).filter(s=>s.carId===carId);
+  // for health/status calculation: keep only the LATEST record per itemKey
+  // but return all for history display
+  return all;
+}
+
+function getActiveServices(carId){
+  // returns only the latest record per itemKey (for health/alerts)
+  const all=(db.carServices||[]).filter(s=>s.carId===carId);
+  const latest={};
+  all.forEach(s=>{
+    const key=s.itemKey||s.name;
+    if(!latest[key]||new Date(s.date)>=new Date(latest[key].date)){
+      latest[key]=s;
+    }
+  });
+  return Object.values(latest);
 }
 
 function checkAndNotify(){
