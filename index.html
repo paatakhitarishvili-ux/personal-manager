@@ -1671,8 +1671,10 @@ function renderMeetings(){
       if(isToday) style+='background:var(--accent);color:#fff;font-weight:700;';
       else if(hasMeet) style+='background:rgba(46,204,136,.15);color:var(--green);font-weight:700;';
       else style+='color:var(--text2);';
-      const clickable=hasMeet?`onclick="showDayMeetings(${calYear},${calMonth},${d})" style="cursor:pointer"`:'';
-      cal+=`<div ${clickable} style="${style}">${d}${hasMeet&&!isToday?'<div style="width:4px;height:4px;border-radius:50%;background:var(--green);margin:1px auto 0"></div>':''}${isToday&&hasMeet?'<div style="width:4px;height:4px;border-radius:50%;background:#fff;margin:1px auto 0"></div>':''}</div>`;
+      const extraStyle=hasMeet?'cursor:pointer;':'';
+      const dot=hasMeet?'<div style="width:4px;height:4px;border-radius:50%;background:'+(isToday?'#fff':'var(--green)')+';margin:1px auto 0"></div>':'';
+      const dayAttr=hasMeet?'data-year="'+calYear+'" data-month="'+calMonth+'" data-day="'+d+'" class="cal-day-meet"':'';
+      cal+='<div '+dayAttr+' style="'+style+extraStyle+'">'+d+dot+'</div>';
     }
     cal+='</div></div>';
 
@@ -1695,6 +1697,15 @@ function renderMeetings(){
       if(flexM.length) html+=`<div class="meet-hdr">🔄 მოქნილი</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
     }
     el.innerHTML=html;
+    // add click handlers for calendar days
+    el.querySelectorAll('.cal-day-meet').forEach(function(dayEl){
+      dayEl.addEventListener('click', function(){
+        const y=parseInt(this.getAttribute('data-year'));
+        const mo=parseInt(this.getAttribute('data-month'));
+        const d=parseInt(this.getAttribute('data-day'));
+        showDayMeetings(y,mo,d);
+      });
+    });
 
   } else if(tabId==='mtab-all'){
     const el=document.getElementById('mtab-all');
