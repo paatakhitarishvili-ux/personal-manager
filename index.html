@@ -367,8 +367,8 @@ select option{background:var(--bg3)}
     <div class="sc"><div class="sc-h"><div class="sc-t">💸 ერთჯერადი ხარჯები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddOTE')">+ დამატება</button></div><div class="sc-b" id="crrOTE"></div></div>
   </div>
   <div class="tb" id="tab-expenses">
-    <div class="sc"><div class="sc-h"><div class="sc-t">🏦 სესხები</div></div><div class="sc-b" id="expL"></div></div>
-    <div class="sc"><div class="sc-h"><div class="sc-t">📌 ფიქსირებული ხარჯები</div></div><div class="sc-b" id="expF"></div></div>
+    <div class="sc"><div class="sc-h"><div class="sc-t">🏦 სესხები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddLoan')">+ დამატება</button></div><div class="sc-b" id="expL"></div></div>
+    <div class="sc"><div class="sc-h"><div class="sc-t">📌 ფიქსირებული ხარჯები</div><button class="btn bs" style="font-size:12px;padding:6px 10px" onclick="openM('mAddFixed')">+ დამატება</button></div><div class="sc-b" id="expF"></div></div>
     <div class="sc" id="paidArchiveCard" style="display:none">
       <div class="sc-h"><div class="sc-t">✅ გადახდილი ხარჯები — ამ თვეში</div></div>
       <div class="sc-b" id="paidArchiveList"></div>
@@ -795,7 +795,7 @@ function buildOpQueue(){
   opQ=[];opI=0;
 
   // 1. Monthly incomes — day has come
-  db.setup.monthlyIncomes.forEach(inc=>{
+  (db.setup.monthlyIncomes||[]).forEach(inc=>{
     if(!inc.day||!inc.amount) return;
     if(inc.day<=td && md.ci[inc.id]===undefined){
       opQ.push({type:'income',id:inc.id,icon:inc.icon||'💰',name:inc.name,amount:inc.amount,currency:inc.currency,day:inc.day});
@@ -803,7 +803,7 @@ function buildOpQueue(){
   });
 
   // 2. Loans — day has come
-  db.setup.loans.forEach(l=>{
+  (db.setup.loans||[]).forEach(l=>{
     if(!l.day||!l.monthly) return;
     if(l.day<=td && !md['loan_'+l.id+'_asked']){
       opQ.push({type:'loan',id:l.id,icon:'🏦',name:l.name,amount:l.monthly,currency:l.currency,day:l.day});
@@ -811,7 +811,7 @@ function buildOpQueue(){
   });
 
   // 3. Utilities — day has come (ask amount)
-  db.setup.utilities.forEach(u=>{
+  (db.setup.utilities||[]).forEach(u=>{
     if(!u.day) return;
     if(u.day<=td && md.ua[u.id]===undefined){
       opQ.push({type:'utility',id:u.id,icon:'💡',name:u.name,amount:u.amount,currency:u.currency,day:u.day});
@@ -819,7 +819,7 @@ function buildOpQueue(){
   });
 
   // 4. Fixed expenses — day has come
-  db.setup.fixedExpenses.forEach(f=>{
+  (db.setup.fixedExpenses||[]).forEach(f=>{
     if(!f.day||!f.amount) return;
     if(f.day<=td && !md['fix_'+f.id+'_asked']){
       opQ.push({type:'fixed',id:f.id,icon:'📌',name:f.name,amount:f.amount,currency:f.currency,day:f.day});
@@ -914,22 +914,31 @@ function manualConfirm(id){
 function calcTotals(){
   if(!db.setup)return{income:0,expense:0,balance:0};
   const md=getMD();let inc=0,exp=0;
-  db.setup.monthlyIncomes.forEach(i=>{
+  (db.setup.monthlyIncomes||[]).forEach(i=>{
     if(!i.amount)return;
     const ov=md.oi&&md.oi[i.id]!==undefined?md.oi[i.id]:i.amount;
     if(md.ci[i.id]===true)inc+=toGEL(ov,i.currency);
   });
   (md.oti||[]).forEach(i=>inc+=toGEL(i.amount,i.currency));
-  db.setup.loans.forEach(l=>{if(l.monthly&&md.loansPaid&&md.loansPaid[l.id])exp+=toGEL(l.monthly,l.currency);});
-  db.setup.utilities.forEach(u=>{const s=md.ua&&md.ua[u.id]!==undefined?md.ua[u.id]:null;if(s!==null&&s>0)exp+=toGEL(s,u.currency);});
-  db.setup.fixedExpenses.forEach(f=>{if(f.amount&&md.fixedPaid&&md.fixedPaid[f.id])exp+=toGEL(f.amount,f.currency);});
+  (db.setup.loans||[]).forEach(l=>{if(l.monthly&&md.loansPaid&&md.loansPaid[l.id])exp+=toGEL(l.monthly,l.currency);});
+  (db.setup.utilities||[]).forEach(u=>{const s=md.ua&&md.ua[u.id]!==undefined?md.ua[u.id]:null;if(s!==null&&s>0)exp+=toGEL(s,u.currency);});
+  (db.setup.fixedExpenses||[]).forEach(f=>{if(f.amount&&md.fixedPaid&&md.fixedPaid[f.id])exp+=toGEL(f.amount,f.currency);});
   (md.ote||[]).forEach(e=>exp+=toGEL(e.amount,e.currency));
   (md.purch||[]).filter(p=>p.done).forEach(p=>exp+=toGEL(p.amount,p.currency));
   return{income:inc,expense:exp,balance:inc-exp};
 }
 
 function renderAll(){
-  if(!db.setup)return;
+  // ensure setup exists
+  if(!db.setup){
+    db.setup={monthlyIncomes:[],loans:[],utilities:[],fixedExpenses:[],currency:'GEL'};
+  }
+  if(!db.months) db.months={};
+  if(!db.setup.monthlyIncomes) db.setup.monthlyIncomes=[];
+  if(!db.setup.loans) db.setup.loans=[];
+  if(!db.setup.utilities) db.setup.utilities=[];
+  if(!db.setup.fixedExpenses) db.setup.fixedExpenses=[];
+
   const mlblEl=document.getElementById('mlbl');
   if(mlblEl) mlblEl.textContent=GEO[cM]+' '+cY;
   const t=calcTotals();
@@ -947,9 +956,9 @@ function renderNotifs(){
 
 function renderChart(t){
   const el=document.getElementById('chartA'),md=getMD(),cats=[];
-  db.setup.loans.forEach(l=>{if(l.monthly>0)cats.push({n:l.name,a:toGEL(l.monthly,l.currency),col:'#e05555'});});
-  db.setup.utilities.forEach(u=>{const a=md.ua&&md.ua[u.id]!==undefined?md.ua[u.id]:0;if(a>0)cats.push({n:u.name,a:toGEL(a,u.currency),col:'#f0a830'});});
-  db.setup.fixedExpenses.forEach(f=>{if(f.amount>0)cats.push({n:f.name,a:toGEL(f.amount,f.currency),col:'#9b6dff'});});
+  (db.setup.loans||[]).forEach(l=>{if(l.monthly>0)cats.push({n:l.name,a:toGEL(l.monthly,l.currency),col:'#e05555'});});
+  (db.setup.utilities||[]).forEach(u=>{const a=md.ua&&md.ua[u.id]!==undefined?md.ua[u.id]:0;if(a>0)cats.push({n:u.name,a:toGEL(a,u.currency),col:'#f0a830'});});
+  (db.setup.fixedExpenses||[]).forEach(f=>{if(f.amount>0)cats.push({n:f.name,a:toGEL(f.amount,f.currency),col:'#9b6dff'});});
   const ot=(md.ote||[]).reduce((s,e)=>s+toGEL(e.amount,e.currency),0);
   if(ot>0)cats.push({n:'ერთჯერადი',a:ot,col:'#4f8ef7'});
   if(!cats.length){el.innerHTML='<div class="empty"><p>ხარჯები ჯერ არ არის</p></div>';return;}
@@ -962,10 +971,10 @@ function renderUpcoming(){
   if(!isCur){el.innerHTML='<div class="empty"><p>მხოლოდ მიმდინარე თვეში</p></div>';renderActions();return;}
   const td=t.getDate(),items=[];
   // future items only (day >= today)
-  db.setup.loans.forEach(l=>{if(l.day&&l.day>td&&!(md_g().loansPaid&&md_g().loansPaid[l.id]))items.push({n:l.name,ico:'🏦',a:l.monthly,c:l.currency,day:l.day});});
-  db.setup.utilities.forEach(u=>{if(u.day&&u.day>td&&md_g().ua[u.id]===undefined)items.push({n:u.name,ico:'💡',a:u.amount,c:u.currency,day:u.day});});
-  db.setup.fixedExpenses.forEach(f=>{if(f.day&&f.day>td&&!(md_g().fixedPaid&&md_g().fixedPaid[f.id]))items.push({n:f.name,ico:'📌',a:f.amount,c:f.currency,day:f.day});});
-  db.setup.monthlyIncomes.forEach(i=>{if(i.day&&i.day>td&&md_g().ci[i.id]===undefined)items.push({n:i.name,ico:i.icon||'💰',a:i.amount,c:i.currency,day:i.day,income:true});});
+  (db.setup.loans||[]).forEach(l=>{if(l.day&&l.day>td&&!(md_g().loansPaid&&md_g().loansPaid[l.id]))items.push({n:l.name,ico:'🏦',a:l.monthly,c:l.currency,day:l.day});});
+  (db.setup.utilities||[]).forEach(u=>{if(u.day&&u.day>td&&md_g().ua[u.id]===undefined)items.push({n:u.name,ico:'💡',a:u.amount,c:u.currency,day:u.day});});
+  (db.setup.fixedExpenses||[]).forEach(f=>{if(f.day&&f.day>td&&!(md_g().fixedPaid&&md_g().fixedPaid[f.id]))items.push({n:f.name,ico:'📌',a:f.amount,c:f.currency,day:f.day});});
+  (db.setup.monthlyIncomes||[]).forEach(i=>{if(i.day&&i.day>td&&md_g().ci[i.id]===undefined)items.push({n:i.name,ico:i.icon||'💰',a:i.amount,c:i.currency,day:i.day,income:true});});
   (md_g().purch||[]).filter(p=>!p.done&&p.date).forEach(p=>{
     const d=new Date(p.date);
     if(d.getFullYear()===cY&&d.getMonth()===cM&&d.getDate()>td)
@@ -988,7 +997,7 @@ function renderActions(){
   const actions=[];
 
   // incomes: day has come, not yet confirmed
-  db.setup.monthlyIncomes.forEach(inc=>{
+  (db.setup.monthlyIncomes||[]).forEach(inc=>{
     if(!inc.day||!inc.amount) return;
     if(inc.day<=td && md.ci[inc.id]===undefined){
       const late=inc.day<td;
@@ -998,7 +1007,7 @@ function renderActions(){
   });
 
   // loans: day has come, not paid
-  db.setup.loans.forEach(l=>{
+  (db.setup.loans||[]).forEach(l=>{
     if(!l.day||!l.monthly) return;
     if(l.day<=td && !(md.loansPaid&&md.loansPaid[l.id])){
       const late=l.day<td;
@@ -1008,7 +1017,7 @@ function renderActions(){
   });
 
   // utilities: day has come, amount not entered
-  db.setup.utilities.forEach(u=>{
+  (db.setup.utilities||[]).forEach(u=>{
     if(!u.day) return;
     if(u.day<=td && md.ua[u.id]===undefined){
       const late=u.day<td;
@@ -1018,7 +1027,7 @@ function renderActions(){
   });
 
   // fixed: day has come, not paid
-  db.setup.fixedExpenses.forEach(f=>{
+  (db.setup.fixedExpenses||[]).forEach(f=>{
     if(!f.day||!f.amount) return;
     if(f.day<=td && !(md.fixedPaid&&md.fixedPaid[f.id])){
       const late=f.day<td;
@@ -1104,9 +1113,10 @@ function actionAns(i,yes){
 }
 
 function renderCorr(){
+  if(!db.setup) db.setup={monthlyIncomes:[],loans:[],utilities:[],fixedExpenses:[],currency:'GEL'};
   const md=getMD();
   const el1=document.getElementById('crrInc');
-  if(!db.setup.monthlyIncomes.length){el1.innerHTML='<div class="empty"><p>შემოსავლები არ არის</p></div>';}
+  if(!(db.setup.monthlyIncomes||[]).length){el1.innerHTML='<div class="empty"><p>შემოსავლები არ არის</p></div>';}
   else el1.innerHTML=db.setup.monthlyIncomes.map(i=>{
     const conf=md.ci[i.id],ov=md.oi&&md.oi[i.id]!==undefined?md.oi[i.id]:i.amount;
     const badge=conf===true?'<span class="badge bg-green">✓ დარიცხულია</span>':conf===false?'<span class="badge bg-red">✗ არ დარიცხულა</span>':'<span class="badge bg-amber">⏳ მოლოდინში</span>';
@@ -1213,8 +1223,9 @@ function renderPaidArchive(){
 }
 
 function renderExp(){
+  if(!db.setup) db.setup={monthlyIncomes:[],loans:[],utilities:[],fixedExpenses:[],currency:'GEL'};
   const el1=document.getElementById('expL');
-  if(!db.setup.loans.length){el1.innerHTML='<div class="empty"><p>სესხები არ არის</p></div>';}
+  if(!(db.setup.loans||[]).length){el1.innerHTML='<div class="empty"><p>სესხები არ არის</p></div>';}
   else el1.innerHTML=db.setup.loans.map(l=>{
     let mos=null;if(l.endDate){const e=new Date(l.endDate+'-01'),n=new Date(cY,cM,1);mos=Math.max(0,(e.getFullYear()-n.getFullYear())*12+(e.getMonth()-n.getMonth()));}
     return `<div class="lb"><div class="lh"><div class="li-n">🏦 ${l.name}</div><span class="badge bg-red">${l.day?l.day+' რიცხვი':''}</span></div>
@@ -1223,7 +1234,7 @@ function renderExp(){
     </div>`;
   }).join('');
   const el2=document.getElementById('expF');
-  if(!db.setup.fixedExpenses.length){el2.innerHTML='<div class="empty"><p>ფიქსირებული ხარჯები არ არის</p></div>';}
+  if(!(db.setup.fixedExpenses||[]).length){el2.innerHTML='<div class="empty"><p>ფიქსირებული ხარჯები არ არის</p></div>';}
   else el2.innerHTML=db.setup.fixedExpenses.map(f=>`<div class="li"><div class="li-l"><div class="li-ico" style="background:rgba(155,109,255,.1)">📌</div><div><div class="li-n">${f.name}</div><div class="li-s">${f.day?f.day+' რიცხვი':''}</div></div></div><div class="li-r"><div class="li-a red">${fA(f.amount,f.currency)}</div></div></div>`).join('');
 }
 
@@ -1252,11 +1263,11 @@ function renderArch(){
     const[y,m]=k.split('-').map(Number),md=db.months[k];
     let inc=0,exp=0;
     if(db.setup){
-      db.setup.monthlyIncomes.forEach(i=>{if(md.ci&&md.ci[i.id]===true){const ov=md.oi&&md.oi[i.id]!==undefined?md.oi[i.id]:i.amount;inc+=toGEL(ov,i.currency);}});
+      (db.setup.monthlyIncomes||[]).forEach(i=>{if(md.ci&&md.ci[i.id]===true){const ov=md.oi&&md.oi[i.id]!==undefined?md.oi[i.id]:i.amount;inc+=toGEL(ov,i.currency);}});
       (md.oti||[]).forEach(i=>inc+=toGEL(i.amount,i.currency));
-      db.setup.loans.forEach(l=>{if(l.monthly&&md.loansPaid&&md.loansPaid[l.id])exp+=toGEL(l.monthly,l.currency);});
-      db.setup.utilities.forEach(u=>{const a=md.ua&&md.ua[u.id]!==undefined?md.ua[u.id]:0;if(a>0)exp+=toGEL(a,u.currency);});
-      db.setup.fixedExpenses.forEach(f=>{if(f.amount&&md.fixedPaid&&md.fixedPaid[f.id])exp+=toGEL(f.amount,f.currency);});
+      (db.setup.loans||[]).forEach(l=>{if(l.monthly&&md.loansPaid&&md.loansPaid[l.id])exp+=toGEL(l.monthly,l.currency);});
+      (db.setup.utilities||[]).forEach(u=>{const a=md.ua&&md.ua[u.id]!==undefined?md.ua[u.id]:0;if(a>0)exp+=toGEL(a,u.currency);});
+      (db.setup.fixedExpenses||[]).forEach(f=>{if(f.amount&&md.fixedPaid&&md.fixedPaid[f.id])exp+=toGEL(f.amount,f.currency);});
       (md.ote||[]).forEach(e=>exp+=toGEL(e.amount,e.currency));
       (md.purch||[]).filter(p=>p.done).forEach(p=>exp+=toGEL(p.amount,p.currency));
     }
@@ -2746,6 +2757,46 @@ function checkAndNotify(){
   }
 }
 
+
+function openAddLoan(){
+  // fill day select
+  const sel=document.getElementById('loan_d');
+  if(sel && sel.options.length<=1) sel.innerHTML='<option value="">—</option>'+DAYS;
+  document.getElementById('loan_n').value='';
+  document.getElementById('loan_a').value='';
+  document.getElementById('loan_t').value='';
+  document.getElementById('loan_e').value='';
+  openM('mAddLoan');
+}
+
+function saveLoanModal(){
+  const name=document.getElementById('loan_n').value.trim();
+  const amt=parseFloat(document.getElementById('loan_a').value)||0;
+  const cur=document.getElementById('loan_c').value;
+  const day=parseInt(document.getElementById('loan_d').value)||0;
+  const endDate=document.getElementById('loan_e').value;
+  const total=parseFloat(document.getElementById('loan_t').value)||0;
+  if(!name){showToast('⚠️ შეიყვანე სახელი');return;}
+  if(!amt){showToast('⚠️ შეიყვანე თანხა');return;}
+  if(!db.setup) db.setup={monthlyIncomes:[],loans:[],utilities:[],fixedExpenses:[],currency:'GEL'};
+  if(!db.setup.loans) db.setup.loans=[];
+  db.setup.loans.push({id:'ln_'+Date.now(),name,monthly:amt,currency:cur,day,endDate,total});
+  save();closeM('mAddLoan');renderAll();showToast('✅ სესხი დამატებულია');
+}
+
+function saveFixedModal(){
+  const name=document.getElementById('fixed_n').value.trim();
+  const amt=parseFloat(document.getElementById('fixed_a').value)||0;
+  const cur=document.getElementById('fixed_c').value;
+  const day=parseInt(document.getElementById('fixed_d').value)||0;
+  if(!name){showToast('⚠️ შეიყვანე სახელი');return;}
+  if(!amt){showToast('⚠️ შეიყვანე თანხა');return;}
+  if(!db.setup) db.setup={monthlyIncomes:[],loans:[],utilities:[],fixedExpenses:[],currency:'GEL'};
+  if(!db.setup.fixedExpenses) db.setup.fixedExpenses=[];
+  db.setup.fixedExpenses.push({id:'fx_'+Date.now(),name,amount:amt,currency:cur,day});
+  save();closeM('mAddFixed');renderAll();showToast('✅ ფიქსირებული ხარჯი დამატებულია');
+}
+
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 </script>
 
@@ -3286,5 +3337,45 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
 </div>
 
 
+
+<!-- ADD LOAN MODAL -->
+<div class="overlay" id="mAddLoan">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">🏦 სესხის დამატება</div>
+    <div class="fg"><label>სახელი</label><input type="text" id="loan_n" placeholder="სახლის სესხი, მანქანის სესხი..."></div>
+    <div class="r2">
+      <div class="fg"><label>თვიური გადასახადი</label><input type="number" id="loan_a" placeholder="0" min="0"></div>
+      <div class="fg"><label>ვალუტა</label><select id="loan_c"><option value="GEL">₾ ლარი</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option></select></div>
+    </div>
+    <div class="r2">
+      <div class="fg"><label>გადახდის რიცხვი</label><select id="loan_d"><option value="">—</option></select></div>
+      <div class="fg"><label>დასრულება (სურვ.)</label><input type="month" id="loan_e"></div>
+    </div>
+    <div class="fg"><label>დარჩენილი ვალი (სურვ.)</label><input type="number" id="loan_t" placeholder="0" min="0"></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn bs" onclick="closeM('mAddLoan')">გაუქმება</button>
+      <button class="btn bp" onclick="saveLoanModal()">✓ დამატება</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD FIXED EXPENSE MODAL -->
+<div class="overlay" id="mAddFixed">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">📌 ფიქსირებული ხარჯის დამატება</div>
+    <div class="fg"><label>სახელი</label><input type="text" id="fixed_n" placeholder="ინტერნეტი, სადაზღვევო..."></div>
+    <div class="r3">
+      <div class="fg"><label>თანხა</label><input type="number" id="fixed_a" placeholder="0" min="0"></div>
+      <div class="fg"><label>ვალუტა</label><select id="fixed_c"><option value="GEL">₾ ლარი</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option></select></div>
+      <div class="fg"><label>გადახდის რიცხვი</label><select id="fixed_d"><option value="">—</option></select></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn bs" onclick="closeM('mAddFixed')">გაუქმება</button>
+      <button class="btn bp" onclick="saveFixedModal()">✓ დამატება</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
