@@ -1666,7 +1666,8 @@ function renderMeetings(){
       if(isToday) style+='background:var(--accent);color:#fff;font-weight:700;';
       else if(hasMeet) style+='background:rgba(46,204,136,.15);color:var(--green);font-weight:700;';
       else style+='color:var(--text2);';
-      cal+=`<div style="${style}">${d}${hasMeet&&!isToday?'<div style="width:4px;height:4px;border-radius:50%;background:var(--green);margin:1px auto 0"></div>':''}${isToday&&hasMeet?'<div style="width:4px;height:4px;border-radius:50%;background:#fff;margin:1px auto 0"></div>':''}</div>`;
+      const clickable=hasMeet?`onclick="showDayMeetings(${calYear},${calMonth},${d})" style="cursor:pointer"`:'';
+      cal+=`<div ${clickable} style="${style}">${d}${hasMeet&&!isToday?'<div style="width:4px;height:4px;border-radius:50%;background:var(--green);margin:1px auto 0"></div>':''}${isToday&&hasMeet?'<div style="width:4px;height:4px;border-radius:50%;background:#fff;margin:1px auto 0"></div>':''}</div>`;
     }
     cal+='</div></div>';
 
@@ -2834,10 +2835,15 @@ function getCarServices(carId){
 }
 
 function checkAndNotify(){
-  if(db.notifEnabled && Notification.permission === 'granted'){
+  if(Notification.permission === 'granted'){
     scheduleLocalNotifications();
   }
 }
+
+// Check notifications every 30 minutes
+setInterval(()=>{
+  if(Notification.permission==='granted') scheduleLocalNotifications();
+}, 30*60*1000);
 
 
 function openAddLoan(){
@@ -2922,54 +2928,105 @@ function showExpiredMeetingPrompt(list, idx){
   const dateStr=m.date+(m.time?' '+m.time:'');
 
   // create prompt overlay
-  const ov=document.createElement('div');
-  ov.className='conf-overlay active';
-  ov.style.zIndex='9999';
-  ov.innerHTML=`
-    <div class="conf-box" style="text-align:center">
+  // use existing cDel overlay
+  const cDel=document.getElementById('cDel');
+  const box=document.querySelector('#cDel .conf-box');
+  if(!box){showExpiredMeetingPrompt(list,idx+1);return;}
+  box.innerHTML=`
+    <div style="text-align:center">
       <div style="font-size:30px;margin-bottom:8px">📅</div>
       <div style="font-size:15px;font-weight:700;margin-bottom:6px">${title}</div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:16px">${dateStr}</div>
       <div style="font-size:13px;margin-bottom:16px">შეხვედრა შედგა?</div>
       <div style="display:flex;gap:8px">
-        <button class="btn bs" style="flex:1" onclick="expiredMeetReschedule('${m.id}',this)">📆 გადავდო</button>
-        <button class="btn bp" style="flex:1" onclick="expiredMeetDone('${m.id}',this)">✅ შედგა</button>
+        <button class="btn bs" style="flex:1" onclick="expiredMeetReschedule('${m.id}')">📆 გადავდო</button>
+        <button class="btn bp" style="flex:1" onclick="expiredMeetDone('${m.id}')">✅ შედგა</button>
       </div>
     </div>`;
-  document.body.appendChild(ov);
-
-  // after this one closes, show next
-  ov._onClose=()=>showExpiredMeetingPrompt(list, idx+1);
+  cDel.classList.add('active');
+  window._expiredNext=()=>showExpiredMeetingPrompt(list,idx+1);
 }
 
-function expiredMeetDone(id, btn){
-  const ov=btn.closest('.conf-overlay');
+function expiredMeetDone(id){
   db.meetings=db.meetings.map(m=>{
-    if(m.id===id) return {...m, status:'archived', archivedAt:new Date().toISOString()};
+    if(m.id===id) return Object.assign({},m,{status:'archived',archivedAt:new Date().toISOString()});
     return m;
   });
   save();
-  if(ov){if(ov._onClose)ov._onClose();ov.remove();}
+  closeConf('cDel');
   showToast('✅ შეხვედრა არქივში გადავიდა');
   renderAll();
+  setTimeout(()=>{if(window._expiredNext)window._expiredNext();},500);
 }
 
-function expiredMeetReschedule(id, btn){
-  const ov=btn.closest('.conf-overlay');
-  if(ov){if(ov._onClose)ov._onClose();ov.remove();}
-  // open reschedule modal
+function expiredMeetReschedule(id){
   const m=db.meetings.find(x=>x.id===id);
   if(!m) return;
-  // show simple date picker
-  const newDate=prompt('ახალი თარიღი (YYYY-MM-DD):', m.date||'');
-  if(newDate){
-    db.meetings=db.meetings.map(x=>{
-      if(x.id===id) return {...x, date:newDate, status:'upcoming'};
-      return x;
-    });
-    save();renderAll();
-    showToast('📆 შეხვედრა გადაიდო');
+  closeConf('cDel');
+  // show reschedule picker using date input
+  const box=document.querySelector('#cDel .conf-box');
+  if(box){
+    box.innerHTML=`
+      <div style="text-align:center">
+        <div style="font-size:14px;font-weight:700;margin-bottom:12px">📆 ახალი თარიღი</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${m.title||'შეხვედრა'}</div>
+        <input type="date" id="rescheduleDate" value="${m.date||''}" style="width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-size:15px;padding:10px;font-family:inherit;margin-bottom:12px">
+        <div style="display:flex;gap:8px">
+          <button class="btn bs" style="flex:1" onclick="closeConf('cDel');if(window._expiredNext)window._expiredNext()">გაუქმება</button>
+          <button class="btn bp" style="flex:1" onclick="confirmReschedule('${id}')">✓ შენახვა</button>
+        </div>
+      </div>`;
+    document.getElementById('cDel').classList.add('active');
   }
+}
+
+function confirmReschedule(id){
+  const newDate=document.getElementById('rescheduleDate').value;
+  if(!newDate){showToast('⚠️ შეიყვანე თარიღი');return;}
+  db.meetings=db.meetings.map(x=>{
+    if(x.id===id) return Object.assign({},x,{date:newDate,status:'upcoming'});
+    return x;
+  });
+  save();renderAll();
+  closeConf('cDel');
+  showToast('📆 შეხვედრა გადაიდო');
+  setTimeout(()=>{if(window._expiredNext)window._expiredNext();},500);
+}
+
+
+function showDayMeetings(year, month, day){
+  const dateStr=year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+  const meets=(db.meetings||[]).filter(m=>m.date===dateStr&&m.status!=='archived');
+  const GEO_SHORT=['იან','თებ','მარ','აპრ','მაი','ივნ','ივლ','აგვ','სექ','ოქტ','ნოე','დეკ'];
+  const dateLabel=day+' '+GEO_SHORT[month]+' '+year;
+
+  let html=`<div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:12px">📅 ${dateLabel}</div>`;
+  if(!meets.length){
+    html+='<div class="empty"><p>ამ დღეს შეხვედრები არ არის</p></div>';
+  } else {
+    meets.forEach(m=>{
+      const typeColors={personal:'var(--accent)',group:'var(--green)',party:'var(--purple)'};
+      const typeNames={personal:'👤 პირადი',group:'👥 ჯგუფური',party:'🥂 ქეიფი'};
+      html+=`<div style="background:var(--bg3);border-radius:var(--r);padding:12px;margin-bottom:8px;border-left:3px solid ${typeColors[m.meetType]||'var(--accent)'}">
+        <div style="font-size:14px;font-weight:700">${m.title||'შეხვედრა'}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">${typeNames[m.meetType]||''} ${m.time?'· '+m.time:''} ${m.location?'· 📍'+m.location:''}</div>
+        ${m.note?`<div style="font-size:11px;color:var(--text3);margin-top:4px">📝 ${m.note}</div>`:''}
+      </div>`;
+    });
+  }
+
+  // show in a modal
+  document.getElementById('cDelT').textContent='';
+  document.getElementById('cDelP').textContent='';
+  const box=document.querySelector('#cDel .conf-box');
+  if(box){
+    box.innerHTML=`
+      <div style="max-height:70vh;overflow-y:auto">
+        ${html}
+      </div>
+      <button class="btn bp" style="width:100%;margin-top:12px" onclick="closeConf('cDel')">დახურვა</button>`;
+  }
+  document.getElementById('cDel').classList.add('active');
 }
 
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
