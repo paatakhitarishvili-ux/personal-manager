@@ -763,6 +763,8 @@ function enterApp(){
     if(ed) ed.textContent=u.email||(window._fbUser&&window._fbUser.email)||'—';
   }
 
+  // check expired meetings
+  setTimeout(checkExpiredMeetings, 1500);
   // welcome
   setTimeout(showWelcome,500);
 
@@ -1413,7 +1415,14 @@ function openM(id){
     const today=new Date().toISOString().split('T')[0];
     document.getElementById('meet_date').value=today;
   }
-  document.getElementById(id).classList.add('active');
+  const el=document.getElementById(id);
+  if(!el) return;
+  // fill day selects for loan and fixed modals
+  const loanD=el.querySelector('#loan_d');
+  if(loanD) loanD.innerHTML='<option value="">— რიცხვი —</option>'+DAYS;
+  const fixedD=el.querySelector('#fixed_d');
+  if(fixedD) fixedD.innerHTML='<option value="">— რიცხვი —</option>'+DAYS;
+  el.classList.add('active');
   const today=new Date().toISOString().split('T')[0];
   ['oti_d','ote_d','p_d'].forEach(f=>{const e=document.getElementById(f);if(e&&!e.value)e.value=today;});
 }
@@ -1627,23 +1636,58 @@ function renderMeetings(){
   });return arr;};
 
   if(tabId==='mtab-main'){
-    // next 7 days + flex
     const el=document.getElementById('mtab-main');
+    // Build calendar for current month
+    const calNow=new Date();
+    const calYear=calNow.getFullYear();
+    const calMonth=calNow.getMonth();
+    const calToday=calNow.getDate();
+    const firstDay=new Date(calYear,calMonth,1).getDay();
+    const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+    // get all meeting dates this month
+    const meetDates=new Set();
+    (db.meetings||[]).filter(m=>m.status!=='archived'&&m.date).forEach(m=>{
+      const d=new Date(m.date);
+      if(d.getFullYear()===calYear&&d.getMonth()===calMonth) meetDates.add(d.getDate());
+    });
+    // build calendar HTML
+    const weekDays=['კვ','ორ','სამ','ოთ','ხუთ','პარ','შაბ'];
+    let cal='<div style="background:var(--bg2);border-radius:var(--r);padding:12px;margin-bottom:14px">';
+    cal+=`<div style="text-align:center;font-weight:700;font-size:14px;color:var(--accent);margin-bottom:10px">${GEO[calMonth]} ${calYear}</div>`;
+    cal+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center">';
+    weekDays.forEach(d=>{cal+=`<div style="font-size:10px;color:var(--text2);font-weight:700;padding:4px 0">${d}</div>`;});
+    // empty cells before first day
+    const startDay=(firstDay+6)%7; // make Monday first
+    for(let i=0;i<startDay;i++) cal+='<div></div>';
+    for(let d=1;d<=daysInMonth;d++){
+      const isToday=d===calToday;
+      const hasMeet=meetDates.has(d);
+      let style='font-size:12px;padding:5px 2px;border-radius:50%;cursor:default;position:relative;';
+      if(isToday) style+='background:var(--accent);color:#fff;font-weight:700;';
+      else if(hasMeet) style+='background:rgba(46,204,136,.15);color:var(--green);font-weight:700;';
+      else style+='color:var(--text2);';
+      cal+=`<div style="${style}">${d}${hasMeet&&!isToday?'<div style="width:4px;height:4px;border-radius:50%;background:var(--green);margin:1px auto 0"></div>':''}${isToday&&hasMeet?'<div style="width:4px;height:4px;border-radius:50%;background:#fff;margin:1px auto 0"></div>':''}</div>`;
+    }
+    cal+='</div></div>';
+
+    // next 7 days + flex
     const weekItems=upcoming.filter(m=>{
       if(m.type==='date'&&m.date){const d=new Date(m.date);d.setHours(0,0,0,0);return d<=week;}
       return true;
     });
     sortMeets(weekItems);
-    if(!weekItems.length){el.innerHTML='<div class="empty" style="padding-top:30px"><div class="empty-i">📅</div><p>მომდევნო 7 დღეში შეხვედრები არ არის</p></div>';return;}
     const todayM=[],futureM=[],flexM=[];
     weekItems.forEach(m=>{
       if(m.type==='date'){const d=new Date(m.date);d.setHours(0,0,0,0);const diff=(d-today)/(864e5);if(diff===0)todayM.push(m);else futureM.push(m);}
       else flexM.push(m);
     });
-    let html='';
-    if(todayM.length) html+=`<div class="meet-hdr">📍 დღეს</div>`+todayM.map(m=>meetCard(m,typeInfo,today,true)).join('');
-    if(futureM.length) html+=`<div class="meet-hdr">📆 მომდევნო 7 დღე</div>`+futureM.map(m=>meetCard(m,typeInfo,today,false)).join('');
-    if(flexM.length) html+=`<div class="meet-hdr">🔄 მოქნილი</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
+    let html=cal;
+    if(!weekItems.length) html+=`<div class="empty" style="padding-top:10px"><div class="empty-i">📅</div><p>მომდევნო 7 დღეში შეხვედრები არ არის</p></div>`;
+    else{
+      if(todayM.length) html+=`<div class="meet-hdr">📍 დღეს</div>`+todayM.map(m=>meetCard(m,typeInfo,today,true)).join('');
+      if(futureM.length) html+=`<div class="meet-hdr">📆 მომდევნო 7 დღე</div>`+futureM.map(m=>meetCard(m,typeInfo,today,false)).join('');
+      if(flexM.length) html+=`<div class="meet-hdr">🔄 მოქნილი</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
+    }
     el.innerHTML=html;
 
   } else if(tabId==='mtab-all'){
@@ -2758,6 +2802,19 @@ function scheduleLocalNotifications(){
     });
   });
 
+  // Check upcoming meetings (next 24 hours)
+  const now2=new Date();
+  const tomorrow2=new Date(now2.getTime()+24*60*60*1000);
+  (db.meetings||[]).filter(m=>m.status!=='archived').forEach(m=>{
+    if(!m.date) return;
+    const mDate=new Date(m.date+(m.time?'T'+m.time:''));
+    if(mDate>now2 && mDate<=tomorrow2){
+      const diff=Math.round((mDate-now2)/60000);
+      const diffTxt=diff<60?diff+' წუთში':(Math.round(diff/60))+' საათში';
+      upcoming.push({title:'📅 შეხვედრა '+diffTxt, body:(m.title||'შეხვედრა')+(m.location?' · '+m.location:'')});
+    }
+  });
+
   // Show local notifications
   upcoming.forEach((n, i) => {
     setTimeout(()=>{
@@ -2768,7 +2825,7 @@ function scheduleLocalNotifications(){
           badge: '/personal-manager/icon-192.png'
         });
       }
-    }, i * 2000);
+    }, i * 1500);
   });
 }
 
@@ -2843,6 +2900,78 @@ function delLoanFromApp(id){
 function delFixedFromApp(id){
   showDel(()=>{db.setup.fixedExpenses=db.setup.fixedExpenses.filter(f=>f.id!==id);save();renderAll();showToast('🗑 წაიშალა');});
 }
+
+function checkExpiredMeetings(){
+  if(!db.meetings) return;
+  const now=new Date();
+  const expired=db.meetings.filter(m=>{
+    if(m.status==='archived'||m.status==='expired') return false;
+    if(!m.date) return false;
+    const mDate=new Date(m.date+(m.time?'T'+m.time:'T23:59'));
+    return mDate < now;
+  });
+  if(!expired.length) return;
+  // show one at a time
+  showExpiredMeetingPrompt(expired, 0);
+}
+
+function showExpiredMeetingPrompt(list, idx){
+  if(idx>=list.length) return;
+  const m=list[idx];
+  const title=m.title||'შეხვედრა';
+  const dateStr=m.date+(m.time?' '+m.time:'');
+
+  // create prompt overlay
+  const ov=document.createElement('div');
+  ov.className='conf-overlay active';
+  ov.style.zIndex='9999';
+  ov.innerHTML=`
+    <div class="conf-box" style="text-align:center">
+      <div style="font-size:30px;margin-bottom:8px">📅</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">${title}</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px">${dateStr}</div>
+      <div style="font-size:13px;margin-bottom:16px">შეხვედრა შედგა?</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn bs" style="flex:1" onclick="expiredMeetReschedule('${m.id}',this)">📆 გადავდო</button>
+        <button class="btn bp" style="flex:1" onclick="expiredMeetDone('${m.id}',this)">✅ შედგა</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+
+  // after this one closes, show next
+  ov._onClose=()=>showExpiredMeetingPrompt(list, idx+1);
+}
+
+function expiredMeetDone(id, btn){
+  const ov=btn.closest('.conf-overlay');
+  db.meetings=db.meetings.map(m=>{
+    if(m.id===id) return {...m, status:'archived', archivedAt:new Date().toISOString()};
+    return m;
+  });
+  save();
+  if(ov){if(ov._onClose)ov._onClose();ov.remove();}
+  showToast('✅ შეხვედრა არქივში გადავიდა');
+  renderAll();
+}
+
+function expiredMeetReschedule(id, btn){
+  const ov=btn.closest('.conf-overlay');
+  if(ov){if(ov._onClose)ov._onClose();ov.remove();}
+  // open reschedule modal
+  const m=db.meetings.find(x=>x.id===id);
+  if(!m) return;
+  // show simple date picker
+  const newDate=prompt('ახალი თარიღი (YYYY-MM-DD):', m.date||'');
+  if(newDate){
+    db.meetings=db.meetings.map(x=>{
+      if(x.id===id) return {...x, date:newDate, status:'upcoming'};
+      return x;
+    });
+    save();renderAll();
+    showToast('📆 შეხვედრა გადაიდო');
+  }
+}
+
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 </script>
 
