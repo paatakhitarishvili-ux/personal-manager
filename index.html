@@ -2108,6 +2108,15 @@ function saveService(){
     note:document.getElementById('svc_note').value.trim(),
   };
   if(!db.carServices) db.carServices=[];
+  // archive previous records of same itemKey for this car
+  if(svc.itemKey && svc.itemKey!=='custom'){
+    db.carServices=db.carServices.map(s=>{
+      if(s.carId===svc.carId && (s.itemKey===svc.itemKey) && !s.archivedSvc){
+        return Object.assign({},s,{archivedSvc:true});
+      }
+      return s;
+    });
+  }
   db.carServices.push(svc);
   // update car mileage if higher
   const car=getCarById(currentCarId);
@@ -2415,9 +2424,9 @@ function renderServices(car){
       const stLabel={ok:'✅ კარგად',warn:'⚠️ მალე',due:'🔴 ვადაგასული',new:'🆕 ახალი'}[st.status];
       const stCls={ok:'svc-ok',warn:'svc-warn',due:'svc-due',new:'svc-new'}[st.status];
       const progressPct=s.nextMileage&&car.mileage?Math.min(100,Math.max(0,((car.mileage-s.mileage)/(s.nextKm||1))*100)):0;
-      html+=`<div class="svc-item">
+      html+=`<div class="svc-item" style="${s.archivedSvc?'opacity:0.6':''}">
         <div class="svc-item-top">
-          <div class="svc-name">${s.name}</div>
+          <div class="svc-name">${s.name}${s.archivedSvc?' <span style="font-size:10px;color:var(--text3)">(შეცვლილი)</span>':''}</div>
           <span class="svc-status ${stCls}">${stLabel}</span>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
@@ -2480,7 +2489,7 @@ function renderFuel(car){
 
 function renderHistory(car){
   const el=document.getElementById('ctab-history');
-  const svcs=getCarServices(car.id);
+  const svcs=getAllCarServices(car.id);
   const fuels=getCarFuels(car.id);
   
   const all=[
@@ -2856,7 +2865,7 @@ function scheduleLocalNotifications(){
 }
 
 function getCarServices(carId){
-  const all=(db.carServices||[]).filter(s=>s.carId===carId);
+  const all=(db.carServices||[]).filter(s=>s.carId===carId&&!s.archivedSvc);
   // for health/status calculation: keep only the LATEST record per itemKey
   // but return all for history display
   return all;
@@ -2864,11 +2873,13 @@ function getCarServices(carId){
 
 function getActiveServices(carId){
   // returns only the latest record per itemKey (for health/alerts)
-  const all=(db.carServices||[]).filter(s=>s.carId===carId);
+  // "latest" = highest mileage recorded
+  const all=(db.carServices||[]).filter(s=>s.carId===carId&&!s.archivedSvc);
   const latest={};
   all.forEach(s=>{
     const key=s.itemKey||s.name;
-    if(!latest[key]||new Date(s.date)>=new Date(latest[key].date)){
+    const existing=latest[key];
+    if(!existing||(s.mileage||0)>=(existing.mileage||0)){
       latest[key]=s;
     }
   });
