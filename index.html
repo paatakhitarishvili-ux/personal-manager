@@ -527,15 +527,10 @@ function save(){
     }
   }
 }
-function load(){
-  try{const d=localStorage.getItem('pm4');if(d)db=JSON.parse(d);}catch(e){}
-  // ensure required fields exist
+function ensureDbFields(){
   if(!db.months) db.months={};
   if(!db.rates) db.rates={usd:2.70,eur:2.95};
-  if(!db.setup) db.setup={
-    monthlyIncomes:[],loans:[],utilities:[],fixedExpenses:[],
-    currency:'GEL'
-  };
+  if(!db.setup) db.setup={monthlyIncomes:[],loans:[],utilities:[],fixedExpenses:[],currency:'GEL'};
   if(!db.setup.monthlyIncomes) db.setup.monthlyIncomes=[];
   if(!db.setup.loans) db.setup.loans=[];
   if(!db.setup.utilities) db.setup.utilities=[];
@@ -545,6 +540,14 @@ function load(){
   if(!db.carFuels) db.carFuels=[];
   if(!db.meetings) db.meetings=[];
   if(!db.feedback) db.feedback=[];
+}
+
+function load(){
+  // only load from localStorage if NOT already loaded from Firestore
+  if(!window._fbUser){
+    try{const d=localStorage.getItem('pm4');if(d)db=JSON.parse(d);}catch(e){}
+  }
+  ensureDbFields();
 }
 function toGEL(a,c){a=parseFloat(a)||0;if(c==='USD')return a*db.rates.usd;if(c==='EUR')return a*db.rates.eur;return a;}
 function fG(a){return a.toLocaleString('ka-GE',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₾'}
@@ -656,9 +659,10 @@ async function fbLogin(){
           }catch(e){}
         }
         if(data.profile) db.user=data.profile;
-        // ensure all fields exist after load
-        load(); // re-run to fill missing fields
-        save(); // sync to localStorage
+        // ensure all required fields exist
+        ensureDbFields();
+        // sync to localStorage
+        try{localStorage.setItem('pm4',JSON.stringify(db));}catch(e){}
       }
     }catch(fe){console.log('Firestore load error:',fe);}
     enterApp();
@@ -942,15 +946,7 @@ function calcTotals(){
 }
 
 function renderAll(){
-  // ensure setup exists
-  if(!db.setup){
-    db.setup={monthlyIncomes:[],loans:[],utilities:[],fixedExpenses:[],currency:'GEL'};
-  }
-  if(!db.months) db.months={};
-  if(!db.setup.monthlyIncomes) db.setup.monthlyIncomes=[];
-  if(!db.setup.loans) db.setup.loans=[];
-  if(!db.setup.utilities) db.setup.utilities=[];
-  if(!db.setup.fixedExpenses) db.setup.fixedExpenses=[];
+  ensureDbFields();
 
   const mlblEl=document.getElementById('mlbl');
   if(mlblEl) mlblEl.textContent=GEO[cM]+' '+cY;
