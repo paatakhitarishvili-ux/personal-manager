@@ -640,7 +640,7 @@ const LANGS = {
 };
 
 let currentLang = 'ka';
-function t(key){ return (LANGS[currentLang]||LANGS.ka)[key] || (LANGS.ka)[key] || key; }
+function tr(key){ return (LANGS[currentLang]||LANGS.ka)[key] || (LANGS.ka)[key] || key; }
 function setLang(lang){
   currentLang = lang;
   db.lang = lang;
@@ -651,22 +651,22 @@ function setLang(lang){
 
 function applyLang(){
   // bottom nav
-  const bnavLabels={bnavP:t('personal'),bnavM:t('meetings'),bnavA:t('auto'),bnavF:t('idea')};
+  const bnavLabels={bnavP:tr('personal'),bnavM:tr('meetings'),bnavA:tr('auto'),bnavF:tr('idea')};
   Object.entries(bnavLabels).forEach(([id,label])=>{
     const el=document.getElementById(id);
     if(el){const lbl=el.querySelector('.bnav-lbl');if(lbl)lbl.textContent=label;}
   });
 
   // personal tabs
-  const tabLabels=[t('main'),t('month'),t('expenses'),t('purchases'),t('archive'),t('settings')];
+  const tabLabels=[tr('main'),tr('month'),tr('expenses'),tr('purchases'),tr('archive'),tr('settings')];
   document.querySelectorAll('#scApp .tab').forEach((tab,i)=>{if(tabLabels[i])tab.textContent=tabLabels[i];});
 
   // meetings tabs
-  const mTabLabels=[t('meet_main'),t('meet_all'),t('meet_archive')];
+  const mTabLabels=[tr('meet_main'),tr('meet_all'),tr('meet_archive')];
   document.querySelectorAll('#sheetMeetings .tab').forEach((tab,i)=>{if(mTabLabels[i])tab.textContent=mTabLabels[i];});
 
   // auto tabs - dashboard, services, fuel, history
-  const aTabLabels=[t('dashboard'),t('services'),t('fuel'),t('history')];
+  const aTabLabels=[tr('dashboard'),tr('services'),tr('fuel'),tr('history')];
   document.querySelectorAll('#sheetAuto .tab, #sheetCarDetail .tab').forEach((tab,i)=>{if(aTabLabels[i])tab.textContent=aTabLabels[i];});
 
   // version labels
@@ -709,7 +709,7 @@ function applyLang(){
 
   // quick pay button text
   const qpBtns=document.querySelectorAll('button[onclick="openQuickPay()"] span');
-  qpBtns.forEach(sp=>{if(sp.textContent&&sp.textContent.length>3)sp.textContent=t('quick_pay');});
+  qpBtns.forEach(sp=>{if(sp.textContent&&sp.textContent.length>3)sp.textContent=tr('quick_pay');});
 }
 
 const GEO=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];
@@ -1342,7 +1342,7 @@ function renderCorr(){
   if(!db.setup) db.setup={monthlyIncomes:[],loans:[],utilities:[],fixedExpenses:[],currency:'GEL'};
   const md=getMD();
   const el1=document.getElementById('crrInc');
-  if(!(db.setup.monthlyIncomes||[]).length){el1.innerHTML=('<div class="empty"><p>'+t('no_data')+'</p></div>');}
+  if(!(db.setup.monthlyIncomes||[]).length){el1.innerHTML=('<div class="empty"><p>'+tr('no_data')+'</p></div>');}
   else el1.innerHTML=db.setup.monthlyIncomes.map(i=>{
     const conf=md.ci[i.id],ov=md.oi&&md.oi[i.id]!==undefined?md.oi[i.id]:i.amount;
     const badge=conf===true?'<span class="badge bg-green">✓ დარიცხულია</span>':conf===false?'<span class="badge bg-red">✗ არ დარიცხულა</span>':'<span class="badge bg-amber">⏳ მოლოდინში</span>';
@@ -1377,7 +1377,7 @@ function renderCorr(){
   if(elCL){
     const loans=db.setup.loans||[];
     const mdL=getMD();
-    if(!loans.length) elCL.innerHTML=('<div class="empty"><p>'+t('no_data')+'</p></div>');
+    if(!loans.length) elCL.innerHTML=('<div class="empty"><p>'+tr('no_data')+'</p></div>');
     else elCL.innerHTML=loans.map(l=>{
       const paid=mdL.loansPaid&&mdL.loansPaid[l.id];
       return `<div class='li'><div class='li-l'><div class='li-ico' style='background:rgba(224,85,85,.1)'>🏦</div><div><div class='li-n'>${l.name}</div><div class='li-s'>${l.day?l.day+' რიცხვი':''}</div></div></div><div class='li-r'><div class='li-a red'>${fA(l.monthly,l.currency)}</div><button class='btn ${paid?"bg":"bs"}' style='margin-top:4px;padding:3px 8px;font-size:11px' onclick='toggleLoanPaid("${l.id}")'>${paid?(currentLang==='en'?'✓ Paid':currentLang==='ru'?'✓ Оплачено':'✓ გადახდილი'):(currentLang==='en'?'Pay':currentLang==='ru'?'Оплатить':'გადახდა')}</button></div></div>`;
@@ -1389,7 +1389,7 @@ function renderCorr(){
   if(elCF){
     const fixed=db.setup.fixedExpenses||[];
     const mdF=getMD();
-    if(!fixed.length) elCF.innerHTML=('<div class="empty"><p>'+t('no_data')+'</p></div>');
+    if(!fixed.length) elCF.innerHTML=('<div class="empty"><p>'+tr('no_data')+'</p></div>');
     else elCF.innerHTML=fixed.map(f=>{
       const paid=mdF.fixedPaid&&mdF.fixedPaid[f.id];
       return `<div class='li'><div class='li-l'><div class='li-ico' style='background:rgba(155,109,255,.1)'>📌</div><div><div class='li-n'>${f.name}</div><div class='li-s'>${f.day?f.day+' რიცხვი':''}</div></div></div><div class='li-r'><div class='li-a red'>${fA(f.amount,f.currency)}</div><button class='btn ${paid?"bg":"bs"}' style='margin-top:4px;padding:3px 8px;font-size:11px' onclick='toggleFixedPaid("${f.id}")'>${paid?(currentLang==='en'?'✓ Paid':currentLang==='ru'?'✓ Оплачено':'✓ გადახდილი'):(currentLang==='en'?'Pay':currentLang==='ru'?'Оплатить':'გადახდა')}</button></div></div>`;
@@ -1909,9 +1909,9 @@ function renderMeetings(){
     let html=cal;
     if(!weekItems.length) html+=`<div class="empty" style="padding-top:10px"><div class="empty-i">📅</div><p>მომდევნო 7 დღეში შეხვედრები არ არის</p></div>`;
     else{
-      if(todayM.length) html+=`<div class="meet-hdr">${t("today")}</div>`+todayM.map(m=>meetCard(m,typeInfo,today,true)).join('');
+      if(todayM.length) html+=`<div class="meet-hdr">${tr("today")}</div>`+todayM.map(m=>meetCard(m,typeInfo,today,true)).join('');
       if(futureM.length) html+=`<div class="meet-hdr">${t("next7")}</div>`+futureM.map(m=>meetCard(m,typeInfo,today,false)).join('');
-      if(flexM.length) html+=`<div class="meet-hdr">${t("flexible")}</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
+      if(flexM.length) html+=`<div class="meet-hdr">${tr("flexible")}</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
     }
     el.innerHTML=html;
     // add click handlers for calendar days
@@ -1934,9 +1934,9 @@ function renderMeetings(){
       else flexM.push(m);
     });
     let html='';
-    if(todayM.length) html+=`<div class="meet-hdr">${t("today")}</div>`+todayM.map(m=>meetCard(m,typeInfo,today,true)).join('');
+    if(todayM.length) html+=`<div class="meet-hdr">${tr("today")}</div>`+todayM.map(m=>meetCard(m,typeInfo,today,true)).join('');
     if(futureM.length) html+=`<div class="meet-hdr">${t("next7")}</div>`+futureM.map(m=>meetCard(m,typeInfo,today,false)).join('');
-    if(flexM.length) html+=`<div class="meet-hdr">${t("flexible")}</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
+    if(flexM.length) html+=`<div class="meet-hdr">${tr("flexible")}</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
     el.innerHTML=html;
 
   } else if(tabId==='mtab-archive'){
