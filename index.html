@@ -212,6 +212,7 @@ select option{background:var(--bg3)}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyC_uSFyLyEfT2211wHSYbabM1tNbLuX_ow",
@@ -224,6 +225,13 @@ select option{background:var(--bg3)}
   firebase.initializeApp(firebaseConfig);
   window._fbAuth = firebase.auth();
   window._fbDb = firebase.firestore();
+  
+  // Cloud Messaging
+  try {
+    window._fbMsg = firebase.messaging();
+  } catch(e) {
+    console.log('Messaging not supported:', e);
+  }
 
   window._fbAuth.onAuthStateChanged(async function(user){
     if(user){
@@ -381,6 +389,12 @@ select option{background:var(--bg3)}
       </div>
       <div class="sr" onclick="changePw()"><div class="srl">🔐 პაროლის შეცვლა</div><div class="srv">→</div></div>
       <div class="sr" onclick="fbLogout()"><div class="srl" style="color:var(--red)">🚪 გამოსვლა</div><div class="srv" style="color:var(--red)">→</div></div>
+    </div>
+    <div class="ss"><div class="sst">შეტყობინებები</div>
+      <div class="sr" onclick="requestNotifPermission()">
+        <div><div class="srl">🔔 Push შეტყობინებები</div><div style="font-size:11px;color:var(--text2)" id="notifStatus">გამორთულია</div></div>
+        <div class="srv" id="notifToggle">ჩართვა</div>
+      </div>
     </div>
     <div class="ss"><div class="sst">მონაცემების სარეზერვო ასლი</div>
       <div class="sr" onclick="exportData()">
@@ -2546,6 +2560,117 @@ function fbLogout(){
       document.getElementById('pwEmail').value='';
       document.getElementById('pwInp').value='';
     });
+  }
+}
+
+
+// ══════════════════════════════════════════
+// PUSH NOTIFICATIONS
+// ══════════════════════════════════════════
+const VAPID_KEY = 'BCVNxpWh3uyLKrOay-zzz9V9SLM-ZbcugC-23yp9oNdJeu1hCYdFbIcb5xObhxVUvl8_wLI9ufNnBh8DwOft_ng';
+
+async function requestNotifPermission(){
+  if(!('Notification' in window)){
+    showToast('⚠️ ბრაუზერი არ უჭერს მხარს შეტყობინებებს');
+    return;
+  }
+  if(!window._fbMsg){
+    showToast('⚠️ Messaging არ არის ხელმისაწვდომი');
+    return;
+  }
+  try{
+    const permission = await Notification.requestPermission();
+    if(permission === 'granted'){
+      const token = await window._fbMsg.getToken({vapidKey: VAPID_KEY});
+      if(token){
+        // save token to Firestore
+        if(window._fbUser){
+          await window._fbDb.collection('users').doc(window._fbUser.uid).set({
+            fcmToken: token,
+            notifEnabled: true
+          },{merge:true});
+        }
+        db.fcmToken = token;
+        db.notifEnabled = true;
+        save();
+        showToast('✅ შეტყობინებები ჩართულია!');
+        scheduleLocalNotifications();
+      }
+    } else {
+      showToast('❌ შეტყობინებები გათიშულია');
+    }
+  }catch(e){
+    console.log('Notif error:', e);
+    showToast('⚠️ შეცდომა: ' + e.message);
+  }
+}
+
+function scheduleLocalNotifications(){
+  if(!('serviceWorker' in navigator)) return;
+  const md = getMD();
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tDate = tomorrow.toISOString().split('T')[0];
+
+  // Check upcoming payments
+  const upcoming = [];
+
+  // Loans
+  (db.setup&&db.setup.loans||[]).forEach(l=>{
+    if(l.day){
+      const payDate = new Date(now.getFullYear(), now.getMonth(), l.day);
+      const diff = Math.ceil((payDate - now) / (1000*60*60*24));
+      if(diff >= 0 && diff <= 3 && !(md.loansPaid&&md.loansPaid[l.id])){
+        upcoming.push({title:'💳 სესხის გადახდა', body: l.name + ' — ' + (l.monthly||0) + ' ₾ · ' + diff + ' დღეში'});
+      }
+    }
+  });
+
+  // Fixed expenses
+  (db.setup&&db.setup.fixedExpenses||[]).forEach(f=>{
+    if(f.day){
+      const payDate = new Date(now.getFullYear(), now.getMonth(), f.day);
+      const diff = Math.ceil((payDate - now) / (1000*60*60*24));
+      if(diff >= 0 && diff <= 3 && !(md.fixedPaid&&md.fixedPaid[f.id])){
+        upcoming.push({title:'📌 ფიქსირებული ხარჯი', body: f.name + ' — ' + (f.amount||0) + ' ₾ · ' + diff + ' დღეში'});
+      }
+    }
+  });
+
+  // Car services due
+  (db.cars||[]).forEach(car=>{
+    const svcs = getCarServices ? getCarServices(car.id) : [];
+    svcs.forEach(s=>{
+      if(!s.nextMileage) return;
+      const remaining = s.nextMileage - (car.mileage||0);
+      if(remaining <= 500 && remaining >= 0){
+        upcoming.push({title:'🚗 სერვისის შეხსენება', body: car.make+' '+car.model+' — '+s.name+' · '+remaining+' კმ დარჩა'});
+      }
+    });
+  });
+
+  // Show local notifications
+  upcoming.forEach((n, i) => {
+    setTimeout(()=>{
+      if(Notification.permission === 'granted'){
+        new Notification(n.title, {
+          body: n.body,
+          icon: '/personal-manager/icon-192.png',
+          badge: '/personal-manager/icon-192.png'
+        });
+      }
+    }, i * 2000);
+  });
+}
+
+function getCarServices(carId){
+  return (db.carServices||[]).filter(s=>s.carId===carId);
+}
+
+function checkAndNotify(){
+  if(db.notifEnabled && Notification.permission === 'granted'){
+    scheduleLocalNotifications();
   }
 }
 
