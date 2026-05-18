@@ -509,13 +509,22 @@ let pwMode='lock',pwFirst='';
 
 function save(){
   try{localStorage.setItem('pm4',JSON.stringify(db));}catch(e){}
-  // also save to Firestore if logged in
-  if(window._fbUser&&window._fbDb&&window._fbFns){
-    window._fbDb.collection('users').doc(window._fbUser.uid).set({
-      profile:db.user||null,
-      appData:JSON.stringify(db),
-      updatedAt:new Date().toISOString()
-    },{merge:true}).catch(e=>console.log('Firestore save error:',e));
+  // save to Firestore
+  if(window._fbUser && window._fbDb){
+    try{
+      window._fbDb.collection('users').doc(window._fbUser.uid).set({
+        profile:db.user||null,
+        appData:JSON.stringify(db),
+        updatedAt:new Date().toISOString()
+      },{merge:true}).then(function(){
+        // saved ok
+      }).catch(function(e){
+        console.log('Firestore save error:',e.code, e.message);
+        showToast('⚠️ ღრუბელში შენახვა ვერ მოხდა');
+      });
+    }catch(e){
+      console.log('Firestore error:',e);
+    }
   }
 }
 function load(){
