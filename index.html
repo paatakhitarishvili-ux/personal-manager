@@ -1156,7 +1156,7 @@ function renderCorr(){
     if(!loans.length) elCL.innerHTML='<div class="empty"><p>სესხები არ არის — დაამატე "გასავ." tab-ში</p></div>';
     else elCL.innerHTML=loans.map(l=>{
       const paid=mdL.loansPaid&&mdL.loansPaid[l.id];
-      return '<div class="li"><div class="li-l"><div class="li-ico" style="background:rgba(224,85,85,.1)">🏦</div><div><div class="li-n">'+l.name+'</div><div class="li-s">'+(l.day?l.day+' რიცხვი':'')+'</div></div></div><div class="li-r"><div class="li-a red">'+fA(l.monthly,l.currency)+'</div><button class="btn '+(paid?'bg':'bs')+'" style="margin-top:4px;padding:3px 8px;font-size:11px" onclick="toggleLoanPaid(''+l.id+'')">'+( paid?'✓ გადახდილი':'გადახდა')+'</button></div></div>';
+      return `<div class='li'><div class='li-l'><div class='li-ico' style='background:rgba(224,85,85,.1)'>🏦</div><div><div class='li-n'>${l.name}</div><div class='li-s'>${l.day?l.day+' რიცხვი':''}</div></div></div><div class='li-r'><div class='li-a red'>${fA(l.monthly,l.currency)}</div><button class='btn ${paid?"bg":"bs"}' style='margin-top:4px;padding:3px 8px;font-size:11px' onclick='toggleLoanPaid("${l.id}")'>${paid?'✓ გადახდილი':'გადახდა'}</button></div></div>`;
     }).join('');
   }
 
@@ -1168,7 +1168,7 @@ function renderCorr(){
     if(!fixed.length) elCF.innerHTML='<div class="empty"><p>ფიქსირებული ხარჯები არ არის — დაამატე "გასავ." tab-შ</p></div>';
     else elCF.innerHTML=fixed.map(f=>{
       const paid=mdF.fixedPaid&&mdF.fixedPaid[f.id];
-      return '<div class="li"><div class="li-l"><div class="li-ico" style="background:rgba(155,109,255,.1)">📌</div><div><div class="li-n">'+f.name+'</div><div class="li-s">'+(f.day?f.day+' რიცხვი':'')+'</div></div></div><div class="li-r"><div class="li-a red">'+fA(f.amount,f.currency)+'</div><button class="btn '+(paid?'bg':'bs')+'" style="margin-top:4px;padding:3px 8px;font-size:11px" onclick="toggleFixedPaid(''+f.id+'')">'+( paid?'✓ გადახდილი':'გადახდა')+'</button></div></div>';
+      return `<div class='li'><div class='li-l'><div class='li-ico' style='background:rgba(155,109,255,.1)'>📌</div><div><div class='li-n'>${f.name}</div><div class='li-s'>${f.day?f.day+' რიცხვი':''}</div></div></div><div class='li-r'><div class='li-a red'>${fA(f.amount,f.currency)}</div><button class='btn ${paid?"bg":"bs"}' style='margin-top:4px;padding:3px 8px;font-size:11px' onclick='toggleFixedPaid("${f.id}")'>${paid?'✓ გადახდილი':'გადახდა'}</button></div></div>`;
     }).join('');
   }}
 
