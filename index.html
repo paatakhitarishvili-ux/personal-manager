@@ -516,7 +516,25 @@ function save(){
     },{merge:true}).catch(e=>console.log('Firestore save error:',e));
   }
 }
-function load(){try{const d=localStorage.getItem('pm4');if(d)db=JSON.parse(d)}catch(e){}}
+function load(){
+  try{const d=localStorage.getItem('pm4');if(d)db=JSON.parse(d);}catch(e){}
+  // ensure required fields exist
+  if(!db.months) db.months={};
+  if(!db.rates) db.rates={usd:2.70,eur:2.95};
+  if(!db.setup) db.setup={
+    monthlyIncomes:[],loans:[],utilities:[],fixedExpenses:[],
+    currency:'GEL'
+  };
+  if(!db.setup.monthlyIncomes) db.setup.monthlyIncomes=[];
+  if(!db.setup.loans) db.setup.loans=[];
+  if(!db.setup.utilities) db.setup.utilities=[];
+  if(!db.setup.fixedExpenses) db.setup.fixedExpenses=[];
+  if(!db.cars) db.cars=[];
+  if(!db.carServices) db.carServices=[];
+  if(!db.carFuels) db.carFuels=[];
+  if(!db.meetings) db.meetings=[];
+  if(!db.feedback) db.feedback=[];
+}
 function toGEL(a,c){a=parseFloat(a)||0;if(c==='USD')return a*db.rates.usd;if(c==='EUR')return a*db.rates.eur;return a;}
 function fG(a){return a.toLocaleString('ka-GE',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₾'}
 function fA(a,c){return(CS[c]||'₾')+a.toLocaleString('ka-GE',{minimumFractionDigits:2,maximumFractionDigits:2})}
@@ -619,8 +637,17 @@ async function fbLogin(){
       const snap=await window._fbDb.collection('users').doc(cred.user.uid).get();
       if(snap.exists){
         const data=snap.data();
-        if(data.appData){try{db=JSON.parse(data.appData);}catch(e){}}
+        if(data.appData){
+          try{
+            const loaded=JSON.parse(data.appData);
+            // merge - keep structure
+            db=loaded;
+          }catch(e){}
+        }
         if(data.profile) db.user=data.profile;
+        // ensure all fields exist after load
+        load(); // re-run to fill missing fields
+        save(); // sync to localStorage
       }
     }catch(fe){console.log('Firestore load error:',fe);}
     enterApp();
@@ -713,7 +740,39 @@ function finishSetup(){
 function enterApp(){
   showSc('scApp');
   document.getElementById('bnav').style.display='flex';
-  updateSetInputs();renderAll();
+
+  // reset to current month
+  cY=new Date().getFullYear();
+  cM=new Date().getMonth();
+
+  updateSetInputs();
+  renderAll();
+
+  // user info in settings
+  const u=db.user||(window._fbUser?{
+    fname:(window._fbUser.displayName||'').split(' ')[0],
+    lname:(window._fbUser.displayName||'').split(' ')[1]||'',
+    email:window._fbUser.email
+  }:null);
+  if(u){
+    const nd=document.getElementById('userNameDisplay');
+    const ed=document.getElementById('userEmailDisplay');
+    if(nd) nd.textContent=((u.fname||'')+' '+(u.lname||'')).trim()||'—';
+    if(ed) ed.textContent=u.email||(window._fbUser&&window._fbUser.email)||'—';
+  }
+
+  // welcome
+  setTimeout(showWelcome,500);
+
+  // notifications
+  setTimeout(()=>{
+    if(Notification.permission==='granted'){
+      const ns=document.getElementById('notifStatus');
+      const nt=document.getElementById('notifToggle');
+      if(ns) ns.textContent='ჩართულია ✅';
+      if(nt) nt.textContent='✓';
+    }
+  },1000);
 }
 function changeMonth(d){cM+=d;if(cM>11){cM=0;cY++;}if(cM<0){cM=11;cY--;}renderAll();}
 function showTab(n){
@@ -871,7 +930,8 @@ function calcTotals(){
 
 function renderAll(){
   if(!db.setup)return;
-  document.getElementById('mlbl').textContent=GEO[cM]+' '+cY;
+  const mlblEl=document.getElementById('mlbl');
+  if(mlblEl) mlblEl.textContent=GEO[cM]+' '+cY;
   const t=calcTotals();
   document.getElementById('bNum').textContent=fG(t.balance);
   document.getElementById('bIn').textContent=fG(t.income);
@@ -1213,14 +1273,18 @@ function toggleOTI(){document.getElementById('otiNW').style.display=document.get
 function saveMI(){
   const name=document.getElementById('mi_n').value.trim(),icon=document.getElementById('mi_ico').value.trim()||'💰';
   const amt=gf('mi_a'),cur=gv('mi_c'),day=gi('mi_d');
-  if(!name){showToast('⚠️ შეიყვანე სახელი');return;}if(!amt){showToast('⚠️ შეიყვანე თანხა');return;}
+  if(!name){showToast('⚠️ შეიყვანე სახელი');return;}
+  if(!amt){showToast('⚠️ შეიყვანე თანხა');return;}
+  if(!db.setup) db.setup={monthlyIncomes:[],loans:[],utilities:[],fixedExpenses:[],currency:'GEL'};
+  if(!db.setup.monthlyIncomes) db.setup.monthlyIncomes=[];
   db.setup.monthlyIncomes.push({id:'mi_'+Date.now(),name,icon,amount:amt,currency:cur,day});
-  save();closeM('mAddMI');renderAll();showToast('✅ დამატებულია');
+  save();closeM('mAddMI');renderAll();showToast('✅ შემოსავალი დამატებულია');
 }
 function saveU(){
   const name=document.getElementById('u_n').value.trim(),amt=gf('u_a'),cur=gv('u_c'),day=gi('u_d');
   if(!name){showToast('⚠️ შეიყვანე სახელი');return;}
-  const id='ut_'+Date.now();db.setup.utilities.push({id,name,amount:amt,currency:cur,day});
+  const id='ut_'+Date.now();if(!db.setup.utilities)db.setup.utilities=[];
+  db.setup.utilities.push({id,name,amount:amt,currency:cur,day});
   const md=getMD();if(!md.ua)md.ua={};if(amt>0)md.ua[id]=amt;
   save();closeM('mAddU');renderAll();showToast('✅ დამატებულია');
 }
@@ -1228,20 +1292,27 @@ function saveOTI(){
   const cat=gv('oti_cat'),name=cat==='service'?'მომსახურების ანაზღაურება':(document.getElementById('oti_n').value.trim()||'სხვა');
   const amt=gf('oti_a'),cur=gv('oti_c'),date=gv('oti_d');
   if(!amt){showToast('⚠️ შეიყვანე თანხა');return;}
-  const md=getMD();md.oti.push({name,amount:amt,currency:cur,date});
-  save();closeM('mAddOTI');renderAll();showToast('✅ დამატებულია');
+  const md=getMD();
+  if(!md.oti) md.oti=[];
+  md.oti.push({name,amount:amt,currency:cur,date:date||new Date().toISOString().split('T')[0]});
+  save();closeM('mAddOTI');renderAll();showToast('✅ შემოსავალი დამატებულია');
 }
 function saveOTE(){
   const name=document.getElementById('ote_n').value.trim(),amt=gf('ote_a'),cur=gv('ote_c'),date=gv('ote_d');
-  if(!name){showToast('⚠️ შეიყვანე სახელი');return;}if(!amt){showToast('⚠️ შეიყვანე თანხა');return;}
-  const md=getMD();md.ote.push({name,amount:amt,currency:cur,date});
-  save();closeM('mAddOTE');renderAll();showToast('✅ დამატებულია');
+  if(!name){showToast('⚠️ შეიყვანე სახელი');return;}
+  if(!amt){showToast('⚠️ შეიყვანე თანხა');return;}
+  const md=getMD();
+  if(!md.ote) md.ote=[];
+  md.ote.push({name,amount:amt,currency:cur,date:date||new Date().toISOString().split('T')[0]});
+  save();closeM('mAddOTE');renderAll();showToast('✅ ხარჯი დამატებულია');
 }
 function saveP(){
   const name=document.getElementById('p_n').value.trim(),amt=gf('p_a'),cur=gv('p_c'),date=gv('p_d');
   if(!name){showToast('⚠️ შეიყვანე სახელი');return;}
-  const md=getMD();md.purch.push({name,amount:amt,currency:cur,date,done:false});
-  save();closeM('mAddP');renderAll();showToast('✅ დამატებულია');
+  const md=getMD();
+  if(!md.purch) md.purch=[];
+  md.purch.push({name,amount:amt||0,currency:cur||'GEL',date:date||'',done:false});
+  save();closeM('mAddP');renderAll();showToast('✅ შესყიდვა დამატებულია');
 }
 
 // ── SETTINGS ──
@@ -2403,13 +2474,14 @@ function saveQuickPay(){
 
   // Add each item to purchases as "done" (already paid)
   if(!md.purch) md.purch = [];
+  const qpDate = document.getElementById('qp_date').value || new Date().toISOString().split('T')[0];
   items.forEach(item => {
     md.purch.push({
       name: item.name,
       amount: item.price,
       currency: item.currency,
-      date: date,
-      done: true,  // already paid - deducts from balance
+      date: qpDate,
+      done: true,
       asked: true,
       fromQuickPay: true
     });
