@@ -3005,35 +3005,42 @@ function showDayMeetings(year, month, day){
   const GEO_SHORT=['იან','თებ','მარ','აპრ','მაი','ივნ','ივლ','აგვ','სექ','ოქტ','ნოე','დეკ'];
   const dateLabel=day+' '+GEO_SHORT[month]+' '+year;
 
-  let html=`<div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:12px">📅 ${dateLabel}</div>`;
+  let html=`<div style="font-size:15px;font-weight:700;color:var(--accent);margin-bottom:14px;text-align:center">📅 ${dateLabel}</div>`;
   if(!meets.length){
     html+='<div class="empty"><p>ამ დღეს შეხვედრები არ არის</p></div>';
   } else {
+    const typeColors={personal:'var(--accent)',group:'var(--green)',party:'var(--purple)'};
+    const typeNames={personal:'👤 პირადი',group:'👥 ჯგუფური',party:'🥂 ქეიფი'};
     meets.forEach(m=>{
-      const typeColors={personal:'var(--accent)',group:'var(--green)',party:'var(--purple)'};
-      const typeNames={personal:'👤 პირადი',group:'👥 ჯგუფური',party:'🥂 ქეიფი'};
       html+=`<div style="background:var(--bg3);border-radius:var(--r);padding:12px;margin-bottom:8px;border-left:3px solid ${typeColors[m.meetType]||'var(--accent)'}">
         <div style="font-size:14px;font-weight:700">${m.title||'შეხვედრა'}</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:4px">${typeNames[m.meetType]||''} ${m.time?'· '+m.time:''} ${m.location?'· 📍'+m.location:''}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">
+          ${typeNames[m.meetType]||''}${m.time?' · ⏰ '+m.time:''}${m.location?' · 📍 '+m.location:''}
+        </div>
         ${m.note?`<div style="font-size:11px;color:var(--text3);margin-top:4px">📝 ${m.note}</div>`:''}
       </div>`;
     });
   }
 
-  // show in a modal
-  document.getElementById('cDelT').textContent='';
-  document.getElementById('cDelP').textContent='';
-  const box=document.querySelector('#cDel .conf-box');
-  if(box){
-    box.innerHTML=`
-      <div style="max-height:70vh;overflow-y:auto">
-        ${html}
-      </div>
-      <button class="btn bp" style="width:100%;margin-top:12px" onclick="closeConf('cDel')">დახურვა</button>`;
+  // use day meetings overlay
+  let ov=document.getElementById('dayMeetingsOv');
+  if(!ov){
+    ov=document.createElement('div');
+    ov.id='dayMeetingsOv';
+    ov.className='overlay';
+    ov.style.zIndex='1000';
+    ov.innerHTML='<div class="modal"><div class="mh"></div><div id="dayMeetingsBody"></div></div>';
+    ov.addEventListener('click',function(e){if(e.target===ov)ov.classList.remove('active');});
+    document.body.appendChild(ov);
   }
-  document.getElementById('cDel').classList.add('active');
+  document.getElementById('dayMeetingsBody').innerHTML=html+'<button class="btn bp" style="width:100%;margin-top:12px" onclick="closeDayMeetings()">დახურვა</button>';
+  ov.classList.add('active');
 }
 
+function closeDayMeetings(){
+  const ov=document.getElementById('dayMeetingsOv');
+  if(ov) ov.classList.remove('active');
+}
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 </script>
 
