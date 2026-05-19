@@ -3775,7 +3775,7 @@ function toggleStatDetail(id){
 // ══════════════════════════════════════════
 
 function showFunTab(name){
-  const tabs=['quiz','checkers','nardi','domino'];
+  const tabs=['quiz','checkers','durak','joker'];
   document.querySelectorAll('#sheetFun .tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===name));
   document.querySelectorAll('#sheetFun .tb').forEach(b=>b.classList.remove('active'));
   const el=document.getElementById('funTab'+name.charAt(0).toUpperCase()+name.slice(1));
@@ -3783,83 +3783,80 @@ function showFunTab(name){
   if(name==='checkers') startCheckers();
 }
 
-function initFunSheet(){ /* init on demand */ }
+function initFunSheet(){ }
 
-// ── QUIZ (რა სად როდის) ──
-const QUIZ_QUESTIONS = [
-  {q:'1995 წელს, საქართველოს პარლამენტმა მიიღო ახალი კონსტიტუცია. რა სახელმწიფო სისტემა დაამყარა ამ კონსტიტუციამ?', a:'საპრეზიდენტო-საპარლამენტო რესპუბლიკა'},
-  {q:'გელათის მონასტერი, რომელიც იუნესკოს მსოფლიო მემკვიდრეობის ძეგლია, XII საუკუნეში ააგო. ვინ დააარსა ეს სავანე და რა წელს?', a:'დიდმა მეფემ დავით IV აღმაშენებელმა 1106 წელს'},
-  {q:'2008 წელს სამხრეთ ოსეთთან კონფლიქტი. ომი რამდენი დღე გაგრძელდა და ვის მიერ მოხდა ცეცხლის შეწყვეტის შეთავაზება?', a:'5 დღე (8-12 აგვისტო). ნიკოლა სარკოზიმ (საფრანგეთი, EU პრეზიდენტობა)'},
-  {q:'ვახტანგ VI — ქართველი მეფე და განმანათლებელი. იგი ემიგრაციაში გარდაიცვალა. სად და რა წელს?', a:'ასტრახანი, რუსეთი, 1737 წელს'},
-  {q:'ნინო წმინდა — ქართლის განმანათლებელი. ტრადიციის მიხედვით, ვის ლოცვის შედეგად განიკურნა მიჰრან მეფე და მოინათლა?', a:'წმინდა ნინოს ლოცვის შედეგად, IV საუკუნეში (337 წ.)'},
-  {q:'საქართველოს ეროვნული ბანკი შეიქმნა. ქართული ლარი რა წელს შემოიღეს და ვინ იყო ეროვნული ბანკის პირველი პრეზიდენტი?', a:'1995 წლის 2 ოქტომბერს. ნოდარ ჯავახიშვილი'},
-  {q:'შოთა რუსთაველის "ვეფხისტყაოსანი" — პოემა სამი გმირის შესახებ. დაასახელეთ სამივე მთავარი გმირი.', a:'ტარიელი, ავთანდილი, ფრიდონი'},
-  {q:'ბაგრატ III — პირველი გაერთიანებული საქართველოს მეფე. რა წელს გაერთიანდა საქართველო მისი მეფობის დროს?', a:'1008 წელს (ანუ X-XI საუკუნეთა მიჯნაზე)'},
-  {q:'ილია ჭავჭავაძე ეწამა 1907 წელს. სად მოხდა მისი მკვლელობა და ვინ არიან მის სიკვდილში ეჭვმიტანილნი?', a:'წიწამური-ჭოპორტის გზაზე. სოციალ-ფედერალისტები ან ბოლშევიკები'},
-  {q:'ცოტნე დადიანი — ქართველი მხედართმთავარი. რა გმირული საქციელი ჩაიდინა მონღოლთა წინაშე?', a:'პირობა დადო, რომ ეჭამა მდუღარე კირი, თუ მისი ამხანაგები გაათავისუფლებდნენ'},
-  {q:'2003 წლის "ვარდების რევოლუცია" — ვინ ხელმძღვანელობდა და ვის ჩამოარყა ხელისუფლებიდან?', a:'მიხეილ სააკაშვილი ხელმძღვანელობდა, ედუარდ შევარდნაძეს ჩამოარყა'},
-  {q:'მცხეთა — ძველი დედაქალაქი. სვეტიცხოვლის ტაძარი რის საფუძველზე აშენდა ლეგენდის მიხედვით?', a:'ქრისტეს კვართის ადგილზე, სადაც ელია მღვდელმა ჩამარხა იგი'},
-  {q:'USSR-ის დაშლის შემდეგ, საქართველო დამოუკიდებლობას კი არ გამოაცხადა 1991 წელს — ეს ადრე მოხდა. კი, მაგრამ ვის ქვეშ მყოფი საქართველო ცნო სსრ კავშირმა 1918-1921 წლებში?', a:'საქართველოს დემოკრატიულ რესპუბლიკას (მენშევიკები ხელისუფლებაში)'},
-  {q:'ქართული ანბანი — მსოფლიოში ერთ-ერთი უნიკალური დამწერლობა. რამდენი ასოა ნუსხური ანბანში?', a:'38 ასო'},
-  {q:'ბათუმის ბოტანიკური ბაღი — კავკასიაში ერთ-ერთი უდიდესი. ვინ დააარსა და რა წელს?', a:'ანდრეი კრასნოვმა 1912 წელს'},
-  {q:'ქართული ღვინის ტრადიცია — 8000 წელზე მეტი. ქვევრი ღვინო 2013 წელს შევიდა UNESCO-ს ძეგლთა სიაში. რა სახელწოდებითაა დარეგისტრირებული?', a:'"ქართული ღვინის ტრადიციული მეთოდი — ქვევრი"'},
-  {q:'დავით გარეჯის გამოქვაბულთა კომპლექსი — VI საუკუნის ნაგებობა. ვინ დააარსა და სად მდებარეობს?', a:'წმინდა დავით გარეჯელმა. კახეთი-აზერბაიჯანის სასაზღვრო ზონაში'},
-  {q:'ქართული ჩოხა — ეროვნული სამოსი. 2014 წლის ოლიმპიადაზე ქართველი სპორტსმენები ჩოხით შევიდნენ. სად ჩატარდა ეს ოლიმპიადა?', a:'სოჭი, რუსეთი (ზამთრის ოლიმპიადა)'},
-  {q:'ნიკო ფიროსმანი — ქართველი მხატვარი. მისი ერთ-ერთი ყველაზე ცნობილი ნახატია "ჟირაფი". რა გარემოებებში გარდაიცვალა?', a:'სიღარიბეში, უცნობ ადგილას, 1918 წელს ტიფლისში'},
-  {q:'2022 წლის ივნისში, ევროკავშირმა საქართველოს განაცხადი განიხილა. რა სტატუსი მიანიჭა?', a:'ევროკავშირის კანდიდატი ქვეყნის სტატუსი 2023 წლის დეკემბერში მიანიჭა'},
+// ═══════════════════════════════
+// QUIZ
+// ═══════════════════════════════
+const QUIZ_QUESTIONS=[
+  {q:'1995 წელს საქართველოს პარლამენტმა მიიღო ახალი კონსტიტუცია. რა სახელმწიფო სისტემა დაამყარა ამ კონსტიტუციამ და ვინ გახდა პირველი პრეზიდენტი ამ კონსტიტუციით?',a:'საპრეზიდენტო-საპარლამენტო რესპუბლიკა. ედუარდ შევარდნაძე'},
+  {q:'გელათის მონასტერი UNESCO-ს ძეგლია. ვინ დააარსა, რა წელს, და სად მდებარეობს?',a:'დავით IV აღმაშენებელმა, 1106 წელს, ქუთაისის მახლობლად'},
+  {q:'2008 წლის ომი რამდენი დღე გაგრძელდა და ვის შუამავლობით მოხდა ცეცხლის შეწყვეტა?',a:'5 დღე (8-12 აგვისტო). ნიკოლა სარკოზი, ევროკავშირის სახელით'},
+  {q:'"ვეფხისტყაოსნის" სამი მთავარი გმირი ვინ არიან და პოემა ვის მიუძღვნა რუსთაველმა?',a:'ტარიელი, ავთანდილი, ფრიდონი. თამარ მეფეს მიუძღვნა'},
+  {q:'ილია ჭავჭავაძე სად მოკლეს, რა წელს და რა სათაურით შევიდა ის ქართულ ისტორიაში?',a:'წიწამური-ჭოპორტის გზაზე, 1907 წელს. "ქართველი ერის მამა"'},
+  {q:'2003 წლის "ვარდების რევოლუცია" — ვინ ხელმძღვანელობდა, ვის ჩამოარყა და რა გახდა მისი სიმბოლო?',a:'მიხეილ სააკაშვილი. შევარდნაძეს ჩამოარყა. ვარდი — სიმბოლო'},
+  {q:'სვეტიცხოვლის ტაძარი — ლეგენდის მიხედვით, რის საფუძველზე აშენდა და ვინ ააგო?',a:'ქრისტეს კვართის ადგილზე. კათალიკოსი მელქიზედეკ I-ის დროს, XI საუკუნეში'},
+  {q:'ქართული ანბანი — მსოფლიოში ერთ-ერთი უნიკალური. რამდენი ასოა მხედრულში და როდის შეიქმნა პირველი ქართული დამწერლობა?',a:'33 ასო. V საუკუნეში (ჩვ.წ.)'},
+  {q:'ნიკო ფიროსმანი — ქართველი მხატვარი. სად, როდის გარდაიცვალა და რა სახელით არის ცნობილი მსოფლიოში?',a:'ტფილისში, 1918 წელს, სიღარიბეში. Niko Pirosmani — პრიმიტივიზმის ოსტატი'},
+  {q:'ბაგრატ III — გაერთიანებული საქართველოს პირველი მეფე. რა წელს გაერთიანდა ქვეყანა და ვის ეკუთვნოდა ეს სახელმწიფო?',a:'1008 წელს. ბაგრატიონთა დინასტია'},
+  {q:'ბათუმის ბოტანიკური ბაღი — კავკასიაში ერთ-ერთი უდიდესი. ვინ დააარსა, რა წელს?',a:'ანდრეი კრასნოვმა, 1912 წელს'},
+  {q:'ქვევრი ღვინო UNESCO-ში შევიდა 2013 წელს. ქვევრის ტექნოლოგია რამდენი წლისაა და რა განასხვავებს მას სხვა ღვინის წარმოებისგან?',a:'8000+ წლის. ღვინო მიწაში ჩაფლულ თიხის ჭურჭელში ყურძნის კანთან ერთად დუღს'},
+  {q:'დავით გარეჯის კომპლექსი — VI საუკუნე. ვინ დააარსა და სასაზღვრო დავა რომელ ქვეყნებს შორის მიმდინარეობს?',a:'წმინდა დავით გარეჯელმა. საქართველო-აზერბაიჯანი'},
+  {q:'საქართველოს 2022 წლის ევრო-განაცხადი — როდის მიენიჭა კანდიდატის სტატუსი?',a:'2023 წლის 14 დეკემბერს'},
+  {q:'ვახტანგ VI — ქართველი მეფე, მეცნიერი და პოეტი. სად გარდაიცვალა ემიგრაციაში?',a:'ასტრახანში, რუსეთი, 1737 წელს'},
+  {q:'ქართული სახელმწიფოს სიმბოლო — "ხუთჯვრიანი" დროშა. რა სიმბოლიკა აქვს მას?',a:'ერთი დიდი წითელი ჯვარი და 4 პატარა. ქრისტიანული სარწმუნოება, სიწმინდე'},
+  {q:'ცოტნე დადიანი — XIII საუკუნის გმირი. რა განსაკუთრებულ საქციელს ჩაიდინა მონღოლთა წინაშე?',a:'ამხანაგების გადასარჩენად თხოვა, პირობა დადო, ყველა ტყვე თუ არ გაათავისუფლეს — ის თვითონ ჩადგებოდა ტყვეობაში'},
+  {q:'ილიკო სუხიშვილი და ნინო რამიშვილი — ქართული ეროვნული ბალეტის დამაარსებლები. რა წელს დაარსდა?',a:'1945 წელს'},
+  {q:'ქართველი ოლიმპიური ჩემპიონები — 1996 წლის ატლანტის ოლიმპიადაზე ქართულმა ჭიდაობამ ოქრო მოიპოვა. ვინ?',a:'ვახტანგ კედელიძე ბერძნულ-რომაული ჭიდაობაში'},
+  {q:'საქართველო NATO-ს წევრობის კანდიდატია. 2008 წელს ბუქარესტის სამიტზე რა გადაწყვეტილება მიიღეს?',a:'საქართველოს და უკრაინას დაპირდნენ NATO-ში გაწევრიანება, მაგრამ MAP (Membership Action Plan) არ მისცეს'},
 ];
 
-let quizDaily = [];
-let quizAnswered = {};
+let quizDaily=[],quizAnswered={};
 
 function loadQuiz(){
-  const today = new Date().toISOString().split('T')[0];
-  const seed = today.replace(/-/g,'');
-  let arr = [...QUIZ_QUESTIONS];
-  // deterministic shuffle based on date
-  for(let i=arr.length-1;i>0;i--){
-    const j=((parseInt(seed.slice(-4))*(i+1))%7919)%(i+1);
-    [arr[i],arr[j]]=[arr[j],arr[i]];
-  }
-  quizDaily = arr.slice(0,5);
-  quizAnswered = db.quizAnswered||{};
+  const today=new Date().toISOString().split('T')[0];
+  const seed=parseInt(today.replace(/-/g,''))%997;
+  let arr=[...QUIZ_QUESTIONS];
+  for(let i=arr.length-1;i>0;i--){const j=(seed*(i+1))%(i+1);[arr[i],arr[j]]=[arr[j],arr[i]];}
+  quizDaily=arr.slice(0,5);
+  quizAnswered=db.quizAnswered||{};
   renderQuiz(today);
 }
 
 function renderQuiz(today){
-  const el = document.getElementById('quizContent');
+  const el=document.getElementById('quizContent');
   if(!el) return;
-  let html = `<div style="font-size:11px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:12px;text-align:center">${today} — დღის კითხვები</div>`;
+  let html=`<div style="font-size:11px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:12px;text-align:center">📅 ${today} — დღის 5 კითხვა</div>`;
   quizDaily.forEach((q,i)=>{
-    const key = today+'_'+i;
-    const shown = quizAnswered[key];
-    html += `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px">
-      <div style="font-size:13px;color:var(--text);font-weight:600;margin-bottom:10px;line-height:1.5">${i+1}. ${q.q}</div>
-      <div id="ans_${i}" style="display:${shown?'block':'none'};background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:var(--rs);padding:10px;font-size:13px;color:var(--green);margin-bottom:8px;line-height:1.5">✅ ${q.a}</div>
+    const key=today+'_'+i;
+    const shown=quizAnswered[key];
+    html+=`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px">
+      <div style="font-size:13px;color:var(--text);font-weight:600;margin-bottom:10px;line-height:1.6">${i+1}. ${q.q}</div>
+      <div id="ans_${i}" style="display:${shown?'block':'none'};background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:var(--rs);padding:10px;font-size:13px;color:var(--green);margin-bottom:6px;line-height:1.5">✅ ${q.a}</div>
       ${!shown?`<button onclick="showAnswer(${i},'${today}')" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);color:var(--text2);font-size:12px;padding:8px 16px;cursor:pointer;font-family:inherit">👁 პასუხის გამჟღავნება</button>`:''}
     </div>`;
   });
-  el.innerHTML = html;
+  el.innerHTML=html;
 }
 
-function showAnswer(i, today){
-  const key = today+'_'+i;
+function showAnswer(i,today){
   if(!db.quizAnswered) db.quizAnswered={};
-  db.quizAnswered[key] = true;
-  quizAnswered[key] = true;
+  db.quizAnswered[today+'_'+i]=true;
+  quizAnswered[today+'_'+i]=true;
   save();
   renderQuiz(today);
 }
 
-// ── CHECKERS (შაშკი) ──
-let ckBoard, ckSel, ckTurn, ckInterval;
+// ═══════════════════════════════
+// CHECKERS (გაუმჯობესებული)
+// ═══════════════════════════════
+let ckBoard,ckSel,ckTurn,ckMustJump=null;
 
 function startCheckers(){
-  // 8x8 board: 1=white(comp), -1=black(player), 2=white king, -2=black king, 0=empty
-  ckBoard = Array(8).fill(null).map(()=>Array(8).fill(0));
+  ckBoard=Array(8).fill(null).map(()=>Array(8).fill(0));
   for(let r=0;r<3;r++) for(let c=0;c<8;c++) if((r+c)%2===1) ckBoard[r][c]=1;
   for(let r=5;r<8;r++) for(let c=0;c<8;c++) if((r+c)%2===1) ckBoard[r][c]=-1;
-  ckSel=null; ckTurn='player';
+  ckSel=null; ckTurn='player'; ckMustJump=null;
   drawCheckers();
   document.getElementById('checkersStatus').textContent='შენი სვლაა (⚫)';
 }
@@ -3869,367 +3866,541 @@ function drawCheckers(){
   if(!canvas) return;
   const ctx=canvas.getContext('2d');
   const sz=40;
+  // valid moves for selected piece
+  let validMoves=[];
+  if(ckSel) validMoves=ckGetMoves(ckBoard,ckSel[0],ckSel[1]).map(m=>`${m.tr},${m.tc}`);
+
   for(let r=0;r<8;r++) for(let c=0;c<8;c++){
     ctx.fillStyle=(r+c)%2===0?'#f0d9b5':'#b58863';
     ctx.fillRect(c*sz,r*sz,sz,sz);
     if(ckSel&&ckSel[0]===r&&ckSel[1]===c){
-      ctx.fillStyle='rgba(16,185,129,.4)';
+      ctx.fillStyle='rgba(16,185,129,.5)';
       ctx.fillRect(c*sz,r*sz,sz,sz);
+    }
+    if(validMoves.includes(`${r},${c}`)){
+      ctx.fillStyle='rgba(251,191,36,.4)';
+      ctx.fillRect(c*sz,r*sz,sz,sz);
+      ctx.strokeStyle='#fbbf24'; ctx.lineWidth=2;
+      ctx.strokeRect(c*sz+1,r*sz+1,sz-2,sz-2);
     }
     const p=ckBoard[r][c];
     if(p!==0){
-      ctx.beginPath();
-      ctx.arc(c*sz+sz/2,r*sz+sz/2,sz/2-4,0,Math.PI*2);
-      ctx.fillStyle=p>0?'#f1f5f9':'#1a1a2e';
-      ctx.fill();
-      ctx.strokeStyle=p>0?'#94a3b8':'#475569';
-      ctx.lineWidth=2; ctx.stroke();
-      if(Math.abs(p)===2){
-        ctx.fillStyle=p>0?'#fbbf24':'#fbbf24';
-        ctx.font='bold 16px sans-serif';
+      const isKing=Math.abs(p)===2;
+      // shadow
+      ctx.fillStyle='rgba(0,0,0,.3)';
+      ctx.beginPath(); ctx.arc(c*sz+sz/2+2,r*sz+sz/2+2,sz/2-5,0,Math.PI*2); ctx.fill();
+      // piece
+      const grad=ctx.createRadialGradient(c*sz+sz/2-3,r*sz+sz/2-3,2,c*sz+sz/2,r*sz+sz/2,sz/2-4);
+      if(p>0){ grad.addColorStop(0,'#f8f8f8'); grad.addColorStop(1,'#c8c8c8'); }
+      else { grad.addColorStop(0,'#555'); grad.addColorStop(1,'#111'); }
+      ctx.fillStyle=grad;
+      ctx.beginPath(); ctx.arc(c*sz+sz/2,r*sz+sz/2,sz/2-4,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle=p>0?'#999':'#333'; ctx.lineWidth=1.5; ctx.stroke();
+      if(isKing){
+        ctx.fillStyle='#fbbf24';
+        ctx.font=`bold ${sz*0.45}px sans-serif`;
         ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText('♛',c*sz+sz/2,r*sz+sz/2);
+        ctx.fillText('♛',c*sz+sz/2,r*sz+sz/2+1);
       }
     }
   }
 }
 
-function ckGetMoves(board, r, c){
-  const p=board[r][c]; if(p===0) return [];
-  const moves=[], jumps=[];
-  const dirs=p===1?[[1,-1],[1,1]]:p===-1?[[-1,-1],[-1,1]]:[[1,-1],[1,1],[-1,-1],[-1,1]];
+function ckGetMoves(board,r,c){
+  const p=board[r][c];
+  if(p===0) return [];
   const isKing=Math.abs(p)===2;
-  if(isKing){dirs.push(...[[1,-1],[1,1],[-1,-1],[-1,1]]);}
-  const uniqueDirs=[...new Set(dirs.map(d=>d.join()))].map(s=>s.split(',').map(Number));
-  uniqueDirs.forEach(([dr,dc])=>{
-    const nr=r+dr,nc=c+dc;
-    if(nr>=0&&nr<8&&nc>=0&&nc<8){
-      if(board[nr][nc]===0) moves.push([nr,nc]);
-      else if(Math.sign(board[nr][nc])!==Math.sign(p)){
-        const jr=r+2*dr,jc=c+2*dc;
-        if(jr>=0&&jr<8&&jc>=0&&jc<8&&board[jr][jc]===0) jumps.push([jr,jc,nr,nc]);
+  const side=Math.sign(p);
+  const moves=[],jumps=[];
+  // Directions: king moves all 4, regular pieces move forward only
+  let dirs=isKing?[[-1,-1],[-1,1],[1,-1],[1,1]]:side===1?[[1,-1],[1,1]]:[[-1,-1],[-1,1]];
+
+  dirs.forEach(([dr,dc])=>{
+    if(isKing){
+      // King slides along diagonal
+      let nr=r+dr,nc=c+dc;
+      let jumped=null;
+      while(nr>=0&&nr<8&&nc>=0&&nc<8){
+        if(board[nr][nc]===0){
+          if(jumped) jumps.push({tr:nr,tc:nc,jr:jumped.r,jc:jumped.c});
+          else moves.push({tr:nr,tc:nc});
+        } else if(Math.sign(board[nr][nc])!==side&&!jumped){
+          jumped={r:nr,c:nc};
+        } else break;
+        nr+=dr; nc+=dc;
+      }
+    } else {
+      // Regular piece
+      const nr=r+dr,nc=c+dc;
+      if(nr>=0&&nr<8&&nc>=0&&nc<8){
+        if(board[nr][nc]===0) moves.push({tr:nr,tc:nc});
+        else if(Math.sign(board[nr][nc])!==side){
+          const jr2=r+2*dr,jc2=c+2*dc;
+          if(jr2>=0&&jr2<8&&jc2>=0&&jc2<8&&board[jr2][jc2]===0)
+            jumps.push({tr:jr2,tc:jc2,jr:nr,jc:nc});
+        }
       }
     }
   });
   return jumps.length?jumps:moves;
 }
 
-function ckAllMoves(board,side){
-  const moves=[];
+function ckAllJumps(board,side){
+  const res=[];
   for(let r=0;r<8;r++) for(let c=0;c<8;c++){
     if(Math.sign(board[r][c])===side){
-      ckGetMoves(board,r,c).forEach(m=>moves.push({r,c,m}));
+      const mvs=ckGetMoves(board,r,c);
+      if(mvs.length&&mvs[0].jr!==undefined) mvs.forEach(m=>res.push({r,c,m}));
     }
   }
-  return moves;
+  return res;
+}
+
+function ckAllMoves(board,side){
+  const res=[];
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    if(Math.sign(board[r][c])===side){
+      ckGetMoves(board,r,c).forEach(m=>res.push({r,c,m}));
+    }
+  }
+  return res;
 }
 
 document.addEventListener('click',function(e){
   const canvas=document.getElementById('checkersCanvas');
-  if(!canvas||ckTurn!=='player'||!ckBoard) return;
+  if(!canvas||ckTurn!=='player'||!ckBoard||e.target!==canvas) return;
   const rect=canvas.getBoundingClientRect();
-  if(e.target!==canvas) return;
   const sz=40;
-  const c=Math.floor((e.clientX-rect.left)/sz);
-  const r=Math.floor((e.clientY-rect.top)/sz);
+  const c=Math.floor((e.clientX-rect.left)*(320/rect.width)/sz);
+  const r=Math.floor((e.clientY-rect.top)*(320/rect.height)/sz);
   if(r<0||r>7||c<0||c>7) return;
+
+  // If must continue jumping
+  if(ckMustJump&&(ckSel===null||ckSel[0]!==ckMustJump[0]||ckSel[1]!==ckMustJump[1])){
+    ckSel=ckMustJump; drawCheckers(); return;
+  }
+
   if(ckSel){
     const moves=ckGetMoves(ckBoard,ckSel[0],ckSel[1]);
-    const mv=moves.find(m=>m[0]===r&&m[1]===c);
+    const mv=moves.find(m=>m.tr===r&&m.tc===c);
     if(mv){
+      // Execute move
       ckBoard[r][c]=ckBoard[ckSel[0]][ckSel[1]];
       ckBoard[ckSel[0]][ckSel[1]]=0;
-      if(mv.length===4) ckBoard[mv[2]][mv[3]]=0;
+      if(mv.jr!==undefined) ckBoard[mv.jr][mv.jc]=0; // remove jumped piece
+      // Promotion
       if(r===0&&ckBoard[r][c]===-1) ckBoard[r][c]=-2;
-      ckSel=null; ckTurn='cpu';
+      // Check for chain jump
+      if(mv.jr!==undefined){
+        const chainJumps=ckGetMoves(ckBoard,r,c).filter(m=>m.jr!==undefined);
+        if(chainJumps.length){
+          ckSel=[r,c]; ckMustJump=[r,c];
+          drawCheckers();
+          return;
+        }
+      }
+      ckSel=null; ckMustJump=null; ckTurn='cpu';
       document.getElementById('checkersStatus').textContent='კომპიუტერი ფიქრობს...';
       drawCheckers();
-      setTimeout(ckCpuMove,600);
+      setTimeout(ckCpuMove,700);
       return;
     }
+    ckSel=null;
   }
-  if(ckBoard[r][c]<0){ ckSel=[r,c]; drawCheckers(); }
-  else { ckSel=null; drawCheckers(); }
+  if(ckBoard[r][c]<0){
+    // Check if forced jump
+    const forced=ckAllJumps(ckBoard,-1);
+    if(forced.length&&!forced.some(f=>f.r===r&&f.c===c)){
+      showToast('⚠️ სავალდებულო ამოგდება!'); return;
+    }
+    ckSel=[r,c];
+  }
+  drawCheckers();
 });
 
 function ckCpuMove(){
   if(!ckBoard) return;
-  const moves=ckAllMoves(ckBoard,1);
-  if(!moves.length){
-    document.getElementById('checkersStatus').textContent='🎉 შენ მოიგე!';
-    return;
-  }
-  // Simple AI: prefer jumps, then random
-  const jumps=moves.filter(m=>m.m.length===4);
-  const pick=jumps.length?jumps[Math.floor(Math.random()*jumps.length)]:moves[Math.floor(Math.random()*moves.length)];
+  // CPU must jump if possible
+  const jumps=ckAllJumps(ckBoard,1);
+  const allMoves=ckAllMoves(ckBoard,1);
+  if(!allMoves.length){ document.getElementById('checkersStatus').textContent='🎉 შენ მოიგე!'; return; }
+  const pool=jumps.length?jumps:allMoves;
+  // Pick best: prefer king moves, then jumps
+  const pick=pool[Math.floor(Math.random()*pool.length)];
   const {r,c,m}=pick;
-  ckBoard[m[0]][m[1]]=ckBoard[r][c];
+  ckBoard[m.tr][m.tc]=ckBoard[r][c];
   ckBoard[r][c]=0;
-  if(m.length===4) ckBoard[m[2]][m[3]]=0;
-  if(m[0]===7&&ckBoard[m[0]][m[1]]===1) ckBoard[m[0]][m[1]]=2;
+  if(m.jr!==undefined) ckBoard[m.jr][m.jc]=0;
+  if(m.tr===7&&ckBoard[m.tr][m.tc]===1) ckBoard[m.tr][m.tc]=2;
+  // Chain jump for CPU
+  if(m.jr!==undefined){
+    const chain=ckGetMoves(ckBoard,m.tr,m.tc).filter(mv=>mv.jr!==undefined);
+    if(chain.length){
+      const c2=chain[0];
+      ckBoard[c2.tr][c2.tc]=ckBoard[m.tr][m.tc];
+      ckBoard[m.tr][m.tc]=0; ckBoard[c2.jr][c2.jc]=0;
+    }
+  }
   ckTurn='player';
   const playerMoves=ckAllMoves(ckBoard,-1);
-  if(!playerMoves.length){
-    document.getElementById('checkersStatus').textContent='😔 კომპიუტერმა მოიგო!';
-    drawCheckers(); return;
-  }
+  if(!playerMoves.length){ document.getElementById('checkersStatus').textContent='😔 კომპიუტერმა მოიგო!'; drawCheckers(); return; }
   document.getElementById('checkersStatus').textContent='შენი სვლაა (⚫)';
   drawCheckers();
 }
 
-// ── NARDI ──
-let nardi={};
+// ═══════════════════════════════
+// DURAK (დურაკი)
+// ═══════════════════════════════
+let dkGame={};
 
-function startNardi(){
-  nardi={
-    board: Array(24).fill(0).map(()=>({count:0,color:null})),
-    barPlayer:[],barCpu:[],
-    homePlayer:[],homeCpu:[],
-    dice:[],diceUsed:[],
-    turn:'player',
-    sel:null,
-    msg:''
-  };
-  // Setup classic backgammon
-  const setup=[
-    [0,2,'cpu'],[5,5,'player'],[7,3,'player'],[11,5,'cpu'],
-    [12,5,'player'],[16,3,'cpu'],[18,5,'cpu'],[23,2,'player']
-  ];
-  setup.forEach(([i,n,c])=>{ nardi.board[i]={count:n,color:c}; });
-  nardi.turn='player';
-  renderNardi();
-}
+const DK_SUITS=['♠','♥','♦','♣'];
+const DK_VALS=['6','7','8','9','10','J','Q','K','A'];
+const DK_VAL_ORDER={'6':0,'7':1,'8':2,'9':3,'10':4,'J':5,'Q':6,'K':7,'A':8};
 
-function rollNardiDice(){
-  if(nardi.dice.length>0&&nardi.diceUsed.length<nardi.dice.length){ showToast('⚠️ ჯერ ეძო გამოიყენე!'); return; }
-  const d1=Math.floor(Math.random()*6)+1;
-  const d2=Math.floor(Math.random()*6)+1;
-  nardi.dice=d1===d2?[d1,d1,d1,d1]:[d1,d2];
-  nardi.diceUsed=[];
-  nardi.msg=`ეძო: ${nardi.dice.join(', ')}`;
-  renderNardi();
-}
-
-function renderNardi(){
-  const el=document.getElementById('nardiContent');
-  if(!el) return;
-  const b=nardi.board;
-  const diceStr=nardi.dice.length?nardi.dice.filter((_,i)=>!nardi.diceUsed.includes(i)).join(' '):'—';
-
-  let html=`<div style="margin-bottom:8px;text-align:center">
-    <span style="font-size:13px;color:var(--text2)">${nardi.turn==='player'?'🎯 შენი სვლა':'🤖 კომპიუტერი'} | ეძო: <strong style="color:var(--accent)">${diceStr}</strong></span>
-  </div>`;
-
-  // Board visualization
-  html+=`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:8px;margin-bottom:8px;overflow-x:auto">
-    <div style="display:grid;grid-template-columns:repeat(13,1fr);gap:2px;min-width:280px">`;
-
-  // Top row (points 13-24)
-  for(let i=12;i<24;i++){
-    const pt=b[i];
-    html+=`<div onclick="nardiClick(${i})" style="background:${nardi.sel===i?'rgba(16,185,129,.3)':i%2===0?'var(--bg2)':'var(--card)'};border-radius:4px;padding:2px;text-align:center;cursor:pointer;min-height:60px">
-      <div style="font-size:8px;color:var(--text3)">${i+1}</div>
-      ${pt.count>0?`<div style="font-size:pt.count>5?'10px':'14px';color:${pt.color==='player'?'var(--text)':'var(--accent)'}">${pt.color==='player'?'⚫':'⚪'}×${pt.count}</div>`:''}
-    </div>`;
-    if(i===17) html+=`<div style="background:var(--bg2);border-radius:4px;text-align:center;font-size:10px;color:var(--text3);padding:2px">BAR<br>${nardi.barPlayer.length?'⚫'+nardi.barPlayer.length:''}<br>${nardi.barCpu.length?'⚪'+nardi.barCpu.length:''}</div>`;
-  }
-
-  html+=`</div><div style="display:grid;grid-template-columns:repeat(13,1fr);gap:2px;min-width:280px;margin-top:4px">`;
-
-  // Bottom row (points 12-1, reversed)
-  for(let i=11;i>=0;i--){
-    if(i===5) html+=`<div style="background:var(--bg2);border-radius:4px;text-align:center;font-size:8px;color:var(--text3);padding:2px">HOME<br>${nardi.homePlayer.length?'⚫'+nardi.homePlayer.length:''}<br>${nardi.homeCpu.length?'⚪'+nardi.homeCpu.length:''}</div>`;
-    const pt=b[i];
-    html+=`<div onclick="nardiClick(${i})" style="background:${nardi.sel===i?'rgba(16,185,129,.3)':i%2===0?'var(--bg2)':'var(--card)'};border-radius:4px;padding:2px;text-align:center;cursor:pointer;min-height:60px">
-      ${pt.count>0?`<div style="font-size:14px;color:${pt.color==='player'?'var(--text)':'var(--accent)'}">${pt.color==='player'?'⚫':'⚪'}×${pt.count}</div>`:''}
-      <div style="font-size:8px;color:var(--text3)">${i+1}</div>
-    </div>`;
-  }
-  html+=`</div></div>`;
-
-  html+=`<div style="font-size:12px;color:var(--amber);text-align:center;margin-bottom:8px">${nardi.msg}</div>`;
-
-  html+=`<div style="display:flex;gap:8px">
-    ${nardi.turn==='player'?`<button class="btn bp" style="flex:1" onclick="rollNardiDice()">🎲 ეძოს გდება</button>`:''}
-    <button class="btn bs" style="flex:1" onclick="startNardi()">🔄 ახალი</button>
-  </div>`;
-
-  el.innerHTML=html;
-}
-
-function nardiClick(point){
-  if(nardi.turn!=='player') return;
-  if(nardi.dice.length===0||nardi.diceUsed.length===nardi.dice.length){ showToast('⚠️ ჯერ ეძო გადაყარე!'); return; }
-  if(nardi.sel===null){
-    if(nardi.board[point].color==='player'&&nardi.board[point].count>0){ nardi.sel=point; renderNardi(); }
-  } else {
-    const unusedDice=nardi.dice.filter((_,i)=>!nardi.diceUsed.includes(i));
-    const diff=nardi.sel-point; // player moves from high to low (0-direction)
-    const diceIdx=nardi.dice.findIndex((d,i)=>!nardi.diceUsed.includes(i)&&d===Math.abs(diff));
-    if(diceIdx>=0&&diff>0){
-      const dest=nardi.board[point];
-      if(dest.count===0||dest.color==='player'||(dest.color==='cpu'&&dest.count===1)){
-        if(dest.color==='cpu'&&dest.count===1){ nardi.barCpu.push('cpu'); nardi.board[point]={count:0,color:null}; }
-        nardi.board[nardi.sel].count--;
-        if(nardi.board[nardi.sel].count===0) nardi.board[nardi.sel].color=null;
-        nardi.board[point].count++;
-        nardi.board[point].color='player';
-        nardi.diceUsed.push(diceIdx);
-        nardi.sel=null;
-        nardi.msg='კარგი სვლა!';
-        if(nardi.diceUsed.length===nardi.dice.length){ setTimeout(nardiCpuTurn,800); nardi.turn='cpu'; }
-        renderNardi();
-      } else { showToast('⚠️ ვერ გადახვალ!'); nardi.sel=null; renderNardi(); }
-    } else { nardi.sel=null; renderNardi(); }
-  }
-}
-
-function nardiCpuTurn(){
-  const d1=Math.floor(Math.random()*6)+1, d2=Math.floor(Math.random()*6)+1;
-  nardi.dice=d1===d2?[d1,d1,d1,d1]:[d1,d2];
-  nardi.diceUsed=[];
-  nardi.msg=`კომპიუტერი: ${nardi.dice.join(', ')}`;
-  // CPU moves from low to high
-  nardi.dice.forEach((die,di)=>{
-    for(let i=0;i<24;i++){
-      if(nardi.board[i].color==='cpu'&&nardi.board[i].count>0){
-        const dest=i+die;
-        if(dest<24&&(nardi.board[dest].count===0||nardi.board[dest].color==='cpu'||(nardi.board[dest].color==='player'&&nardi.board[dest].count===1))){
-          if(nardi.board[dest].color==='player'&&nardi.board[dest].count===1){ nardi.barPlayer.push('player'); nardi.board[dest]={count:0,color:null}; }
-          nardi.board[i].count--;
-          if(nardi.board[i].count===0) nardi.board[i].color=null;
-          nardi.board[dest].count++;
-          nardi.board[dest].color='cpu';
-          nardi.diceUsed.push(di);
-          break;
-        }
-      }
-    }
-  });
-  nardi.turn='player';
-  nardi.dice=[];
-  nardi.msg='შენი სვლაა! ეძო გადაყარე.';
-  renderNardi();
-}
-
-// ── DOMINO ──
-let dom={};
-
-function startDomino(){
-  // Generate all 28 dominoes
-  const all=[];
-  for(let i=0;i<=6;i++) for(let j=i;j<=6;j++) all.push([i,j]);
-  // Shuffle
-  for(let i=all.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [all[i],all[j]]=[all[j],all[i]]; }
-  dom={
-    playerHand:all.slice(0,7),
-    cpuHand:all.slice(7,14),
-    boneyard:all.slice(14),
-    board:[],
-    boardLeft:null, boardRight:null,
-    turn:'player',
-    msg:'შენი სვლა — აირჩიე ქვა'
-  };
-  renderDomino();
-}
-
-function renderDomino(){
-  const el=document.getElementById('dominoContent');
-  if(!el) return;
-
-  const fmtTile=([a,b],idx,clickable,played)=>{
-    const bg=played?'var(--accent)':'var(--bg3)';
-    const onclick=clickable?`onclick="playDomino(${idx})"`:'';
-    return `<div ${onclick} style="display:inline-flex;align-items:center;gap:3px;background:${bg};border:1px solid var(--border);border-radius:6px;padding:5px 7px;font-size:15px;cursor:${clickable?'pointer':'default'};margin:3px">
-      <span>${'⚀⚁⚂⚃⚄⚅'[a]||a}</span><span style="color:var(--text3)">|</span><span>${'⚀⚁⚂⚃⚄⚅'[b]||b}</span>
-    </div>`;
-  };
-
-  const boardStr=dom.board.length===0?'<div style="font-size:12px;color:var(--text3);text-align:center;padding:10px">დაფა ცარიელია — დაიწყე!</div>':
-    `<div style="overflow-x:auto;white-space:nowrap;padding:4px 0">${dom.board.map(t=>fmtTile(t,-1,false,false)).join('')}</div>`;
-
-  let html=`
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px;margin-bottom:10px">
-      <div style="font-size:10px;color:var(--text3);margin-bottom:6px">დაფა | მარ: ${dom.boardLeft??'—'} | მარ-მ: ${dom.boardRight??'—'}</div>
-      ${boardStr}
-    </div>
-    <div style="margin-bottom:10px">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">🤖 კომპ. ხელი: ${dom.cpuHand.length} ქვა</div>
-    </div>
-    <div style="margin-bottom:10px">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">👤 შენი ხელი:</div>
-      <div>${dom.playerHand.map((t,i)=>fmtTile(t,i,dom.turn==='player',false)).join('')}</div>
-    </div>
-    <div style="font-size:12px;color:var(--amber);text-align:center;margin-bottom:8px">${dom.msg}</div>
-    <div style="display:flex;gap:8px">
-      ${dom.turn==='player'?`<button class="btn bs" style="flex:1" onclick="drawDomino()">📥 ქვის წამოღება</button>`:''}
-      <button class="btn bs" style="flex:1" onclick="startDomino()">🔄 ახალი</button>
-    </div>`;
-
-  el.innerHTML=html;
-}
-
-function canPlay(tile, left, right){
-  if(left===null) return true;
-  return tile[0]===left||tile[1]===left||tile[0]===right||tile[1]===right;
-}
-
-function placeTile(tile,side){
-  if(dom.board.length===0){
-    dom.board.push(tile);
-    dom.boardLeft=tile[0];
-    dom.boardRight=tile[1];
-    return true;
-  }
-  if(side==='right'||side==='auto'){
-    if(tile[0]===dom.boardRight){ dom.board.push(tile); dom.boardRight=tile[1]; return true; }
-    if(tile[1]===dom.boardRight){ dom.board.push([tile[1],tile[0]]); dom.boardRight=tile[0]; return true; }
-  }
-  if(side==='left'||side==='auto'){
-    if(tile[1]===dom.boardLeft){ dom.board.unshift(tile); dom.boardLeft=tile[0]; return true; }
-    if(tile[0]===dom.boardLeft){ dom.board.unshift([tile[1],tile[0]]); dom.boardLeft=tile[1]; return true; }
-  }
+function dkCard(s,v){return{s,v};}
+function dkFmt(c){return`<span style="color:${c.s==='♥'||c.s==='♦'?'#f87171':'var(--text)'};">${c.v}${c.s}</span>`;}
+function dkBeats(atk,def,trump){
+  if(def.s===atk.s) return DK_VAL_ORDER[def.v]>DK_VAL_ORDER[atk.v];
+  if(def.s===trump&&atk.s!==trump) return true;
   return false;
 }
 
-function playDomino(idx){
-  if(dom.turn!=='player') return;
-  const tile=dom.playerHand[idx];
-  if(!canPlay(tile,dom.boardLeft,dom.boardRight)){ showToast('⚠️ ეს ქვა ვერ დაიდება!'); return; }
-  placeTile(tile,'auto');
-  dom.playerHand.splice(idx,1);
-  if(dom.playerHand.length===0){ dom.msg='🎉 შენ მოიგე!'; renderDomino(); return; }
-  dom.turn='cpu'; dom.msg='კომპიუტერი სვამს...';
-  renderDomino();
-  setTimeout(domCpuTurn,800);
+function startDurak(){
+  const deck=[];
+  DK_SUITS.forEach(s=>DK_VALS.forEach(v=>deck.push(dkCard(s,v))));
+  for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}
+  const trumpCard=deck[deck.length-1];
+  dkGame={
+    deck,
+    trump:trumpCard.s,
+    trumpCard,
+    playerHand:deck.splice(0,6),
+    cpuHand:deck.splice(0,6),
+    table:[],// [{atk,def}]
+    phase:'attack',// attack|defend|endturn
+    attacker:'player',
+    msg:'',
+    done:false
+  };
+  dkGame.msg=`კოზირი: ${dkFmt(trumpCard)} | შენი სვლა — შეტევა`;
+  renderDurak();
 }
 
-function drawDomino(){
-  if(dom.boneyard.length===0){ showToast('⚠️ ბონეიარდი ცარიელია!'); dom.turn='cpu'; setTimeout(domCpuTurn,500); return; }
-  const tile=dom.boneyard.pop();
-  dom.playerHand.push(tile);
-  dom.msg=`📥 წამოიღე: ${'⚀⚁⚂⚃⚄⚅'[tile[0]]}|${'⚀⚁⚂⚃⚄⚅'[tile[1]]}`;
-  renderDomino();
-}
+function renderDurak(){
+  const el=document.getElementById('durakContent');
+  if(!el) return;
+  const g=dkGame;
 
-function domCpuTurn(){
-  const playable=dom.cpuHand.filter(t=>canPlay(t,dom.boardLeft,dom.boardRight));
-  if(playable.length>0){
-    const tile=playable[0];
-    const idx=dom.cpuHand.indexOf(tile);
-    placeTile(tile,'auto');
-    dom.cpuHand.splice(idx,1);
-    dom.msg=`🤖 კომპმა დადო: ${'⚀⚁⚂⚃⚄⚅'[tile[0]]}|${'⚀⚁⚂⚃⚄⚅'[tile[1]]}`;
-    if(dom.cpuHand.length===0){ dom.msg='😔 კომპიუტერმა მოიგო!'; dom.turn='player'; renderDomino(); return; }
-  } else if(dom.boneyard.length>0){
-    const tile=dom.boneyard.pop();
-    dom.cpuHand.push(tile);
-    dom.msg='🤖 კომპმა ქვა წამოიღო';
-  } else {
-    dom.msg='🤖 კომპმა გამოტოვა';
+  // Table
+  const tableHtml=g.table.length?g.table.map(p=>`
+    <div style="display:inline-flex;flex-direction:column;align-items:center;gap:3px;margin:3px;background:var(--bg2);padding:6px;border-radius:var(--rs)">
+      <div style="font-size:22px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 8px">${dkFmt(p.atk)}</div>
+      ${p.def?`<div style="font-size:10px;color:var(--text3)">↓</div><div style="font-size:22px;background:var(--bg3);border:1px solid rgba(16,185,129,.4);border-radius:6px;padding:4px 8px">${dkFmt(p.def)}</div>`:'<div style="font-size:10px;color:var(--amber)">ფარება...</div>'}
+    </div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:10px">მაგიდა ცარიელია</div>';
+
+  // Player hand
+  const handHtml=g.playerHand.map((c,i)=>{
+    const canPlay=!g.done&&((g.phase==='attack'&&g.attacker==='player')||(g.phase==='defend'&&g.attacker==='cpu'));
+    return `<button onclick="dkPlayCard(${i})" style="font-size:22px;background:var(--bg3);border:1px solid ${canPlay?'var(--accent)':'var(--border)'};border-radius:8px;padding:6px 10px;cursor:${canPlay?'pointer':'default'};margin:3px;font-family:inherit">${dkFmt(c)}</button>`;
+  }).join('');
+
+  let actionBtns='';
+  if(!g.done){
+    if(g.phase==='attack'&&g.attacker==='player'&&g.table.length>0)
+      actionBtns+=`<button class="btn bp" style="flex:1" onclick="dkEndAttack()">✓ სვლის დასრულება</button>`;
+    if(g.phase==='defend'&&g.attacker==='cpu'&&g.table.some(p=>!p.def))
+      actionBtns+=`<button class="btn" style="flex:1;background:var(--red);color:#fff;border:none;border-radius:var(--rs);padding:8px" onclick="dkTakeCards()">📥 ბარათების აღება</button>`;
   }
-  dom.turn='player';
-  renderDomino();
+
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:12px;color:var(--text2)">🂠 დასტა: ${g.deck.length} | კოზირი: ${dkFmt(g.trumpCard)}</span>
+      <span style="font-size:12px;color:var(--text2)">🤖 ბარათი: ${g.cpuHand.length}</span>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:8px;margin-bottom:8px;min-height:80px;overflow-x:auto;white-space:nowrap">${tableHtml}</div>
+    <div style="font-size:12px;color:var(--amber);text-align:center;margin-bottom:8px;min-height:18px">${g.msg}</div>
+    <div style="margin-bottom:8px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">👤 შენი ბარათები:</div><div style="overflow-x:auto;white-space:nowrap">${handHtml}</div></div>
+    <div style="display:flex;gap:8px">${actionBtns}<button class="btn bs" style="flex:1" onclick="startDurak()">🔄 ახალი</button></div>
+  `;
+}
+
+function dkPlayCard(idx){
+  const g=dkGame; if(g.done) return;
+  const card=g.playerHand[idx];
+
+  if(g.phase==='attack'&&g.attacker==='player'){
+    // Can only add cards that match existing table values
+    if(g.table.length>0){
+      const tableVals=g.table.flatMap(p=>[p.atk.v,p.def&&p.def.v]).filter(Boolean);
+      if(!tableVals.includes(card.v)){ showToast('⚠️ მხოლოდ მაგიდაზე არსებული ღირებულება!'); return; }
+    }
+    g.table.push({atk:card,def:null});
+    g.playerHand.splice(idx,1);
+    g.msg='კომპიუტერი ფარავს...';
+    renderDurak();
+    setTimeout(dkCpuDefend,800);
+  } else if(g.phase==='defend'&&g.attacker==='cpu'){
+    // Defend against first undefended
+    const undef=g.table.find(p=>!p.def);
+    if(!undef){ showToast('⚠️ ყველა დაფარულია!'); return; }
+    if(!dkBeats(undef.atk,card,g.trump)){ showToast('⚠️ ეს ბარათი ვერ ფარავს!'); return; }
+    undef.def=card;
+    g.playerHand.splice(idx,1);
+    // Check if all defended
+    if(g.table.every(p=>p.def)){
+      g.msg='✅ დაიფარე! კომპიუტერი შეტევს...';
+      renderDurak();
+      setTimeout(dkRefillAndNext,1000);
+    } else {
+      g.msg='გააგრძელე ფარება...';
+      renderDurak();
+    }
+  }
+}
+
+function dkCpuDefend(){
+  const g=dkGame;
+  g.phase='defend';
+  // CPU tries to defend all
+  let allDefended=true;
+  for(const pair of g.table){
+    if(pair.def) continue;
+    const defending=g.cpuHand.find(c=>dkBeats(pair.atk,c,g.trump));
+    if(defending){
+      pair.def=defending;
+      g.cpuHand.splice(g.cpuHand.indexOf(defending),1);
+    } else { allDefended=false; break; }
+  }
+  if(allDefended){
+    g.msg='🤖 კომპმა დაფარა. შენი სვლა!';
+    renderDurak();
+    setTimeout(dkRefillAndNext,1000);
+  } else {
+    // CPU takes cards
+    g.table.forEach(p=>{ g.cpuHand.push(p.atk); if(p.def) g.cpuHand.push(p.def); });
+    g.table=[];
+    g.msg='🤖 კომპმა ბარათები აიღო. შენი სვლა!';
+    g.phase='attack'; g.attacker='player';
+    dkRefill();
+    renderDurak();
+    setTimeout(dkCheckWin,500);
+  }
+}
+
+function dkEndAttack(){
+  const g=dkGame;
+  if(!g.table.length) return;
+  g.phase='defend'; g.attacker='player';
+  // CPU defends
+  dkCpuDefend();
+}
+
+function dkTakeCards(){
+  const g=dkGame;
+  // Player takes all table cards
+  g.table.forEach(p=>{ g.playerHand.push(p.atk); if(p.def) g.playerHand.push(p.def); });
+  // CPU can add more before player takes - simplified: just give
+  g.table=[];
+  g.msg='📥 ბარათები აიღე. კომპიუტერი შეტევს!';
+  g.phase='attack'; g.attacker='cpu';
+  dkRefill();
+  renderDurak();
+  setTimeout(dkCpuAttack,800);
+}
+
+function dkRefill(){
+  const g=dkGame;
+  while(g.playerHand.length<6&&g.deck.length) g.playerHand.push(g.deck.shift());
+  while(g.cpuHand.length<6&&g.deck.length) g.cpuHand.push(g.deck.shift());
+}
+
+function dkRefillAndNext(){
+  const g=dkGame;
+  g.table=[];
+  dkRefill();
+  dkCheckWin();
+  if(!g.done){
+    if(g.attacker==='player'){ g.attacker='cpu'; g.phase='attack'; g.msg='🤖 კომპიუტერი შეტევს...'; renderDurak(); setTimeout(dkCpuAttack,800); }
+    else { g.attacker='player'; g.phase='attack'; g.msg='შენი სვლა — შეტევა!'; renderDurak(); }
+  }
+}
+
+function dkCheckWin(){
+  const g=dkGame;
+  if(g.deck.length>0) return;
+  if(g.playerHand.length===0){ g.msg='🎉 შენ მოიგე! კომპი — დურაკი!'; g.done=true; renderDurak(); }
+  else if(g.cpuHand.length===0){ g.msg='😔 კომპიუტერი გაიმარჯვა! შენ — დურაკი!'; g.done=true; renderDurak(); }
+}
+
+function dkCpuAttack(){
+  const g=dkGame;
+  if(g.done) return;
+  // CPU attacks with lowest non-trump first, or trump
+  const hand=[...g.cpuHand].sort((a,b)=>{
+    if(a.s===g.trump&&b.s!==g.trump) return 1;
+    if(b.s===g.trump&&a.s!==g.trump) return -1;
+    return DK_VAL_ORDER[a.v]-DK_VAL_ORDER[b.v];
+  });
+  const tableVals=g.table.flatMap(p=>[p.atk.v,p.def&&p.def.v]).filter(Boolean);
+  let card=tableVals.length?hand.find(c=>tableVals.includes(c.v)):hand[0];
+  if(!card) card=hand[0];
+  if(!card){ dkRefillAndNext(); return; }
+  g.table.push({atk:card,def:null});
+  g.cpuHand.splice(g.cpuHand.indexOf(card),1);
+  g.phase='defend'; g.msg=`🤖 შეტევა: ${dkFmt(card)} — ფარება შენ!`;
+  renderDurak();
+}
+
+// ═══════════════════════════════
+// JOKER (ჯოკერი)
+// ═══════════════════════════════
+let jkGame={};
+
+function startJoker(){
+  // 52 cards + 2 jokers = 54
+  const deck=[];
+  ['♠','♥','♦','♣'].forEach(s=>['2','3','4','5','6','7','8','9','10','J','Q','K','A'].forEach(v=>deck.push({s,v,joker:false})));
+  deck.push({s:'🃏',v:'JK',joker:true}); deck.push({s:'🃏',v:'JK',joker:true});
+  for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}
+  const JK_ORDER={'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14,'JK':20};
+  jkGame={
+    deck,
+    hands:[deck.splice(0,13),deck.splice(0,13),deck.splice(0,13),deck.splice(0,13)],
+    // hands[0]=player, 1=left cpu, 2=top cpu, 3=right cpu
+    trump:null, trumpSetter:0,
+    trick:[], trickLed:null,
+    scores:[0,0,0,0],
+    tricksTaken:[0,0,0,0],
+    currentPlayer:0,
+    phase:'trump',// trump|play|done
+    msg:'შეარჩიე კოზირი',
+    order:JK_ORDER
+  };
+  renderJoker();
+}
+
+function jkFmt(c){
+  if(c.joker) return`<span style="color:#fbbf24">🃏JK</span>`;
+  return`<span style="color:${c.s==='♥'||c.s==='♦'?'#f87171':'var(--text)'};">${c.v}${c.s}</span>`;
+}
+
+function renderJoker(){
+  const el=document.getElementById('jokerContent');
+  if(!el) return;
+  const g=jkGame;
+
+  if(g.phase==='trump'){
+    el.innerHTML=`
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">🃏 ჯოკერი</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:16px">შეარჩიე კოზირი</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+          ${['♠','♥','♦','♣'].map(s=>`<button onclick="jkSetTrump('${s}')" style="font-size:24px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px;cursor:pointer;color:${s==='♥'||s==='♦'?'#f87171':'var(--text)'}">${s}</button>`).join('')}
+        </div>
+        <button onclick="jkSetTrump(null)" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:10px;font-size:13px;cursor:pointer;color:var(--text2)">კოზირის გარეშე</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">შენი ბარათები:</div>
+      <div style="overflow-x:auto;white-space:nowrap">${g.hands[0].map(c=>`<span style="font-size:20px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 8px;margin:2px;display:inline-block">${jkFmt(c)}</span>`).join('')}</div>
+    `;
+    return;
+  }
+
+  // Play phase
+  const trickHtml=g.trick.map((t,i)=>`
+    <div style="text-align:center">
+      <div style="font-size:10px;color:var(--text3)">${['შენ','მარ','ზემ','მარჯ'][t.player]}</div>
+      <div style="font-size:22px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 10px">${jkFmt(t.card)}</div>
+    </div>`).join('');
+
+  const handHtml=g.hands[0].map((c,i)=>{
+    const canPlay=g.currentPlayer===0&&g.phase==='play';
+    return`<button onclick="jkPlay(${i})" style="font-size:20px;background:var(--bg3);border:1px solid ${canPlay?'var(--accent)':'var(--border)'};border-radius:8px;padding:5px 9px;cursor:${canPlay?'pointer':'default'};margin:2px;font-family:inherit">${jkFmt(c)}</button>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;color:var(--text2)">კოზირი: ${g.trump?`<span style="color:${g.trump==='♥'||g.trump==='♦'?'#f87171':'var(--text)'}">${g.trump}</span>`:'—'}</span>
+      <span style="font-size:12px;color:var(--text2)">ქულები: შენ ${g.scores[0]} | გუნდი ${g.scores[1]+g.scores[3]}</span>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px;margin-bottom:8px;min-height:70px;display:flex;gap:8px;align-items:center;justify-content:center">${trickHtml||'<span style="font-size:12px;color:var(--text3)">ახალი ხელი</span>'}</div>
+    <div style="font-size:12px;color:var(--amber);text-align:center;margin-bottom:8px">${g.msg}</div>
+    <div style="margin-bottom:8px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">👤 შენი ბარათები (${g.hands[0].length}):</div>
+      <div style="overflow-x:auto;white-space:nowrap;padding:4px 0">${handHtml}</div>
+    </div>
+    <button class="btn bs" style="width:100%" onclick="startJoker()">🔄 ახალი თამაში</button>
+  `;
+}
+
+function jkSetTrump(suit){
+  jkGame.trump=suit;
+  jkGame.phase='play';
+  jkGame.currentPlayer=0;
+  jkGame.msg=suit?`კოზირი: ${suit} — შენი სვლა!`:'კოზირის გარეშე — შენი სვლა!';
+  renderJoker();
+}
+
+function jkPlay(idx){
+  const g=jkGame;
+  if(g.currentPlayer!==0||g.phase!=='play') return;
+  const card=g.hands[0][idx];
+  g.hands[0].splice(idx,1);
+  g.trick.push({player:0,card});
+  if(!g.trickLed) g.trickLed=card.joker?null:card.s;
+  g.msg='კომპიუტერი სვამს...';
+  renderJoker();
+  setTimeout(jkCpuPlay,700);
+}
+
+function jkCpuPlay(){
+  const g=jkGame;
+  // CPU players (1,2,3) play in order
+  const next=[1,2,3].find(p=>!g.trick.some(t=>t.player===p));
+  if(next===undefined){ jkResolveTrick(); return; }
+  const hand=g.hands[next];
+  // Try to follow suit
+  const led=g.trickLed;
+  let card;
+  if(led){
+    const follow=hand.filter(c=>c.s===led&&!c.joker);
+    card=follow.length?follow[Math.floor(Math.random()*follow.length)]:hand[Math.floor(Math.random()*hand.length)];
+  } else card=hand[Math.floor(Math.random()*hand.length)];
+  g.hands[next].splice(g.hands[next].indexOf(card),1);
+  g.trick.push({player:next,card});
+  renderJoker();
+  setTimeout(jkCpuPlay,600);
+}
+
+function jkResolveTrick(){
+  const g=jkGame;
+  // Find winner
+  let winner=g.trick[0];
+  g.trick.forEach(t=>{
+    if(t.card.joker){ winner=t; return; }
+    if(winner.card.joker) return;
+    if(g.trump&&t.card.s===g.trump&&winner.card.s!==g.trump){ winner=t; return; }
+    if(g.trump&&winner.card.s===g.trump&&t.card.s!==g.trump) return;
+    if(t.card.s===winner.card.s&&g.order[t.card.v]>g.order[winner.card.v]) winner=t;
+  });
+  g.tricksTaken[winner.player]++;
+  // Score: A=4, K=3, Q=2, J=1, 10=10, joker=0
+  const scoreCard={A:4,K:3,Q:2,J:1,'10':10};
+  g.trick.forEach(t=>{
+    const pts=t.card.joker?0:(scoreCard[t.card.v]||0);
+    g.scores[winner.player]+=pts;
+  });
+  g.trick=[]; g.trickLed=null;
+  g.currentPlayer=winner.player;
+
+  if(g.hands[0].length===0){
+    g.phase='done';
+    const total=g.scores.reduce((a,b)=>a+b,0);
+    g.msg=`🏁 თამაში დასრულდა! შენი ქულები: ${g.scores[0]} | სულ: ${total}`;
+    renderJoker(); return;
+  }
+  g.msg=`${['შენ','მარ','ზემ','მარჯ'][winner.player]} მოიგო ხელი | ${winner.player===0?'შენი სვლა!':'კომპი სვამს...'}`;
+  renderJoker();
+  if(winner.player!==0) setTimeout(jkCpuPlay,800);
 }
 
 
@@ -5004,8 +5175,8 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
     <div class="tabs" style="margin-bottom:14px">
       <button class="tab active" onclick="showFunTab('quiz')">🎯 კვიზი</button>
       <button class="tab" onclick="showFunTab('checkers')">♟ შაშკი</button>
-      <button class="tab" onclick="showFunTab('nardi')">🎲 ნარდი</button>
-      <button class="tab" onclick="showFunTab('domino')">🁣 დომინო</button>
+      <button class="tab" onclick="showFunTab('durak')">🃏 დურაკი</button>
+      <button class="tab" onclick="showFunTab('joker')">🤡 ჯოკერი</button>
     </div>
 
     <!-- QUIZ TAB (რა სად როდის) -->
@@ -5031,26 +5202,26 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
       </div>
     </div>
 
-    <!-- NARDI TAB -->
-    <div class="tb" id="funTabNardi">
-      <div id="nardiContent">
+    <!-- DURAK TAB -->
+    <div class="tb" id="funTabDurak">
+      <div id="durakContent">
         <div style="text-align:center;padding:20px 0">
-          <div style="font-size:40px;margin-bottom:8px">🎲</div>
-          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">ნარდი</div>
-          <div style="font-size:12px;color:var(--text3);margin-bottom:16px">კლასიკური backgammon კომპიუტერის წინააღმდეგ</div>
-          <button class="btn bp" style="width:100%" onclick="startNardi()">🎲 თამაშის დაწყება</button>
+          <div style="font-size:40px;margin-bottom:8px">🃏</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">დურაკი</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:16px">კომპიუტერის წინააღმდეგ · 36 ბარათი</div>
+          <button class="btn bp" style="width:100%" onclick="startDurak()">🃏 თამაშის დაწყება</button>
         </div>
       </div>
     </div>
 
-    <!-- DOMINO TAB -->
-    <div class="tb" id="funTabDomino">
-      <div id="dominoContent">
+    <!-- JOKER TAB -->
+    <div class="tb" id="funTabJoker">
+      <div id="jokerContent">
         <div style="text-align:center;padding:20px 0">
-          <div style="font-size:40px;margin-bottom:8px">🁣</div>
-          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">დომინო</div>
-          <div style="font-size:12px;color:var(--text3);margin-bottom:16px">კომპიუტერის წინააღმდეგ</div>
-          <button class="btn bp" style="width:100%" onclick="startDomino()">🁣 თამაშის დაწყება</button>
+          <div style="font-size:40px;margin-bottom:8px">🤡</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">ჯოკერი</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:16px">4 მოთამაშე · 52 ბარათი · ქართული წესები</div>
+          <button class="btn bp" style="width:100%" onclick="startJoker()">🤡 თამაშის დაწყება</button>
         </div>
       </div>
     </div>
