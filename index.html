@@ -270,7 +270,7 @@ select option{background:var(--bg3)}
   <div class="pw-inner">
     <div class="pw-logo">🔐</div>
     <div class="pw-title">Personal Manager</div>
-    <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:16px">V_1.6</div>
+    <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:16px">V_1.7</div>
     <div class="pw-sub" id="pwSub">შედი შენს ანგარიშში</div>
     <div class="pw-wrap" style="margin-bottom:10px">
       <input class="pw-inp" type="email" id="pwEmail" placeholder="ელ-ფოსტა" style="letter-spacing:normal">
@@ -332,7 +332,7 @@ select option{background:var(--bg3)}
   <div class="app-hd">
     <div>
       <div class="app-t">📊 მენეჯერი</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.6</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.7</button>
     </div>
     <div class="profile-avatar" id="headerAvatar" onclick="showTab('settings')" title="პროფილი" style="flex-shrink:0"></div>
     <div class="mnav">
@@ -557,6 +557,7 @@ function ensureDbFields(){
   if(!db.feedback) db.feedback=[];
   if(!db.obligations) db.obligations=[];
 }
+
 
 function load(){
   // only load from localStorage if NOT already loaded from Firestore
@@ -796,6 +797,8 @@ function enterApp(){
   setTimeout(checkExpiredMeetings, 1500);
   // update avatars
   setTimeout(updateAllAvatars, 100);
+  // start session timer
+  resetSessionTimer();
   // welcome
   setTimeout(showWelcome,500);
 
@@ -1459,11 +1462,11 @@ function doDelete(){if(delCb)delCb();delCb=null;closeCov('cDel');}
 // ══════════════════════════════════════════
 function switchSheet(name){
   document.getElementById('scApp').style.display='none';
-  ['sheetMeetings','sheetAuto','sheetFeedback','sheetCarDetail','sheetObligations'].forEach(function(id){
+  ['sheetMeetings','sheetAuto','sheetFeedback','sheetCarDetail','sheetObligations','sheetStatistics'].forEach(function(id){
     var e=document.getElementById(id);if(e)e.classList.remove('active');
   });
   ['scRegister','scForgot'].forEach(function(id){var e=document.getElementById(id);if(e){e.classList.remove('active');e.style.display='none';}});
-  ['P','M','A','F','Obl'].forEach(function(x){document.getElementById('bnav'+x).classList.remove('active');});
+  ['P','M','A','F','Obl','Stat'].forEach(function(x){document.getElementById('bnav'+x).classList.remove('active');});
 
   if(name==='personal'){
     document.getElementById('scApp').style.display='block';
@@ -1484,6 +1487,11 @@ function switchSheet(name){
     document.getElementById('sheetObligations').classList.add('active');
     document.getElementById('bnavObl').classList.add('active');
     renderObligations();
+    updateAllAvatars();
+  } else if(name==='statistics'){
+    document.getElementById('sheetStatistics').classList.add('active');
+    document.getElementById('bnavStat').classList.add('active');
+    renderStatistics();
     updateAllAvatars();
   }
 }
@@ -3199,7 +3207,7 @@ function handleCarPhoto(input){
 
 
 // ══════════════════════════════════════════
-// OBLIGATIONS MODULE V_1.6
+// OBLIGATIONS MODULE V_1.7
 // ══════════════════════════════════════════
 let currentOblTab = 'dashboard';
 
@@ -3442,6 +3450,320 @@ function checkOblNotifications(){
   });
 }
 
+
+// ══════════════════════════════════════════
+// SESSION TIMEOUT - 5 minutes
+// ══════════════════════════════════════════
+let _sessionTimer = null;
+const SESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+
+function resetSessionTimer(){
+  if(!window._fbUser) return;
+  if(_sessionTimer) clearTimeout(_sessionTimer);
+  _sessionTimer = setTimeout(function(){
+    // timeout - sign out
+    if(window._fbAuth && window._fbUser){
+      window._fbAuth.signOut().then(function(){
+        window._fbUser = null;
+        document.getElementById('bnav').style.display='none';
+        showSc('scPw');
+        document.getElementById('pwSub').textContent = '⏱ სესია ამოიწურა — შეიყვანეთ პაროლი';
+        document.getElementById('pwEmail').value = '';
+        document.getElementById('pwInp').value = '';
+      });
+    }
+  }, SESSION_TIMEOUT);
+}
+
+// Track visibility change (app goes to background)
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden){
+    // app went to background - start timer
+    resetSessionTimer();
+  } else {
+    // app came back - timer still running, will sign out if 5min passed
+  }
+});
+
+// Reset timer on any touch/click
+document.addEventListener('touchstart', resetSessionTimer, {passive:true});
+document.addEventListener('click', resetSessionTimer);
+
+
+// ══════════════════════════════════════════
+// STATISTICS MODULE V_1.7
+// ══════════════════════════════════════════
+let statPeriod = 'month';
+
+function setStatPeriod(p){
+  statPeriod = p;
+  ['month','quarter','year'].forEach(x=>{
+    const btn = document.getElementById('statPeriod'+x.charAt(0).toUpperCase()+x.slice(1));
+    if(btn){
+      btn.style.background = x===p ? 'var(--accent)' : 'var(--bg3)';
+      btn.style.color = x===p ? '#fff' : 'var(--text2)';
+      btn.style.border = x===p ? 'none' : '1px solid var(--border)';
+    }
+  });
+  renderStatistics();
+}
+
+function getStatMonths(){
+  const now = new Date();
+  if(statPeriod==='month') return [{y:now.getFullYear(),m:now.getMonth()}];
+  if(statPeriod==='quarter'){
+    const q = Math.floor(now.getMonth()/3);
+    return [0,1,2].map(i=>({y:now.getFullYear(),m:q*3+i}));
+  }
+  if(statPeriod==='year'){
+    return Array.from({length:12},(_,i)=>({y:now.getFullYear(),m:i}));
+  }
+  return [];
+}
+
+function getMK(y,m){ return y+'-'+(m<9?'0':'')+(m+1); }
+
+function renderStatistics(){
+  const el = document.getElementById('statContent');
+  if(!el) return;
+
+  const months = getStatMonths();
+  const GEO_M = ['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];
+  const GEO_MS = ['იან','თებ','მარ','აპრ','მაი','ივნ','ივლ','აგვ','სექ','ოქტ','ნოე','დეკ'];
+
+  // Aggregate data across selected months
+  let totalInc = 0, totalExp = 0;
+  const incSources = {}; // name -> amount
+  const expGroups = {
+    'სესხები': 0,
+    'კომუნალური': 0,
+    'ფიქსირებული': 0,
+    'შესყიდვები': 0,
+    'სწრაფი გადახდები': 0,
+    'ერთჯერადი': 0
+  };
+  const expGroupDetails = {
+    'სესხები': [],
+    'კომუნალური': [],
+    'ფიქსირებული': [],
+    'შესყიდვები': [],
+    'სწრაფი გადახდები': [],
+    'ერთჯერადი': []
+  };
+  const monthlyData = []; // for bar chart
+
+  months.forEach(({y,m})=>{
+    const k = getMK(y,m);
+    const md = db.months && db.months[k] ? db.months[k] : {};
+    let mInc = 0, mExp = 0;
+
+    // Monthly incomes
+    (db.setup&&db.setup.monthlyIncomes||[]).forEach(i=>{
+      if(md.ci&&md.ci[i.id]){
+        const amt = toGEL(md.oi&&md.oi[i.id]!==undefined?md.oi[i.id]:i.amount, i.currency);
+        mInc += amt;
+        totalInc += amt;
+        const key = i.name + (i.icon?' '+i.icon:'');
+        incSources[key] = (incSources[key]||0) + amt;
+      }
+    });
+
+    // One-time incomes
+    (md.oti||[]).forEach(i=>{
+      const amt = toGEL(i.amount, i.currency);
+      mInc += amt; totalInc += amt;
+      const key = i.name||'ერთჯერადი შემოსავალი';
+      incSources[key] = (incSources[key]||0) + amt;
+    });
+
+    // Loans
+    (db.setup&&db.setup.loans||[]).forEach(l=>{
+      if(md.loansPaid&&md.loansPaid[l.id]){
+        const amt = toGEL(l.monthly,l.currency);
+        mExp += amt; totalExp += amt;
+        expGroups['სესხები'] += amt;
+        expGroupDetails['სესხები'].push({name:l.name,amt,month:GEO_MS[m]});
+      }
+    });
+
+    // Utilities
+    (db.setup&&db.setup.utilities||[]).forEach(u=>{
+      if(md.ua&&md.ua[u.id]){
+        const amt = toGEL(md.ua[u.id],u.currency);
+        mExp += amt; totalExp += amt;
+        expGroups['კომუნალური'] += amt;
+        expGroupDetails['კომუნალური'].push({name:u.name,amt,month:GEO_MS[m]});
+      }
+    });
+
+    // Fixed
+    (db.setup&&db.setup.fixedExpenses||[]).forEach(f=>{
+      if(md.fixedPaid&&md.fixedPaid[f.id]){
+        const amt = toGEL(f.amount,f.currency);
+        mExp += amt; totalExp += amt;
+        expGroups['ფიქსირებული'] += amt;
+        expGroupDetails['ფიქსირებული'].push({name:f.name,amt,month:GEO_MS[m]});
+      }
+    });
+
+    // Purchases
+    (md.purch||[]).filter(p=>p.done&&!p.fromQuickPay).forEach(p=>{
+      const amt = toGEL(p.amount,p.currency);
+      mExp += amt; totalExp += amt;
+      expGroups['შესყიდვები'] += amt;
+      expGroupDetails['შესყიდვები'].push({name:p.name,amt,month:GEO_MS[m]});
+    });
+
+    // Quick payments
+    (md.purch||[]).filter(p=>p.done&&p.fromQuickPay).forEach(p=>{
+      const amt = toGEL(p.amount,p.currency);
+      mExp += amt; totalExp += amt;
+      expGroups['სწრაფი გადახდები'] += amt;
+      expGroupDetails['სწრაფი გადახდები'].push({name:p.name,amt,month:GEO_MS[m]});
+    });
+
+    // One-time expenses
+    (md.ote||[]).forEach(e=>{
+      const amt = toGEL(e.amount,e.currency);
+      mExp += amt; totalExp += amt;
+      expGroups['ერთჯერადი'] += amt;
+      expGroupDetails['ერთჯერადი'].push({name:e.name,amt,month:GEO_MS[m]});
+    });
+
+    monthlyData.push({label:GEO_MS[m],inc:mInc,exp:mExp});
+  });
+
+  const saved = totalInc - totalExp;
+  const savedPct = totalInc>0 ? Math.round(saved/totalInc*100) : 0;
+
+  // ── BUILD HTML ──
+  let html = '';
+
+  // Overview card
+  html += `<div style="background:linear-gradient(135deg,#047857,#059669);border-radius:var(--r);padding:16px;margin-bottom:14px">
+    <div style="font-size:11px;color:rgba(255,255,255,.7);font-weight:700;letter-spacing:.5px;margin-bottom:8px">
+      ${statPeriod==='month'?GEO_M[new Date().getMonth()]+' '+new Date().getFullYear():statPeriod==='quarter'?Math.floor(new Date().getMonth()/3+1)+' კვარტალი':new Date().getFullYear()+' წელი'}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+      <div>
+        <div style="font-size:11px;color:rgba(255,255,255,.7)">შემოსავალი</div>
+        <div style="font-size:16px;font-weight:700;color:#fff">${fG(totalInc)}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:rgba(255,255,255,.7)">გასავალი</div>
+        <div style="font-size:16px;font-weight:700;color:#fff">${fG(totalExp)}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:rgba(255,255,255,.7)">დანაზოგი</div>
+        <div style="font-size:16px;font-weight:700;color:${saved>=0?'#a7f3d0':'#fca5a5'}">${fG(saved)}</div>
+      </div>
+    </div>
+    ${totalInc>0?`<div style="margin-top:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:11px;color:rgba(255,255,255,.7)">დანაზოგის პროცენტი</span>
+        <span style="font-size:11px;color:#a7f3d0;font-weight:700">${savedPct}%</span>
+      </div>
+      <div style="background:rgba(255,255,255,.2);border-radius:4px;height:6px;overflow:hidden">
+        <div style="height:100%;width:${Math.max(0,Math.min(100,savedPct))}%;background:#a7f3d0;border-radius:4px"></div>
+      </div>
+    </div>`:''}
+  </div>`;
+
+  // Bar chart (multi-month)
+  if(months.length > 1){
+    const maxVal = Math.max(...monthlyData.map(d=>Math.max(d.inc,d.exp)),1);
+    html += `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:12px">📈 ტრენდი</div>
+      <div style="display:flex;align-items:flex-end;gap:4px;height:80px">
+        ${monthlyData.map(d=>`
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+            <div style="width:100%;display:flex;gap:2px;align-items:flex-end;height:64px">
+              <div style="flex:1;background:var(--green);border-radius:3px 3px 0 0;height:${Math.round(d.inc/maxVal*64)}px;min-height:2px"></div>
+              <div style="flex:1;background:var(--red);border-radius:3px 3px 0 0;height:${Math.round(d.exp/maxVal*64)}px;min-height:2px"></div>
+            </div>
+            <div style="font-size:8px;color:var(--text3)">${d.label}</div>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:12px;margin-top:8px">
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;background:var(--green);border-radius:2px"></div><span style="font-size:10px;color:var(--text2)">შემოსავ.</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;background:var(--red);border-radius:2px"></div><span style="font-size:10px;color:var(--text2)">გასავ.</span></div>
+      </div>
+    </div>`;
+  }
+
+  // Income sources
+  const incEntries = Object.entries(incSources).sort((a,b)=>b[1]-a[1]);
+  if(incEntries.length){
+    html += `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:10px">💰 შემოსავლების წყაროები</div>
+      ${incEntries.map(([name,amt])=>{
+        const pct = totalInc>0?Math.round(amt/totalInc*100):0;
+        return `<div style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span style="font-size:12px;color:var(--text)">${name}</span>
+            <span style="font-size:12px;font-weight:700;color:var(--green)">${fG(amt)} <span style="color:var(--text3);font-weight:400">${pct}%</span></span>
+          </div>
+          <div style="background:var(--bg2);border-radius:4px;height:5px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:var(--green);border-radius:4px"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  // Expense groups
+  const expEntries = Object.entries(expGroups).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  if(expEntries.length){
+    html += `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:10px">💸 გასავლების კატეგორიები</div>
+      ${expEntries.map(([cat,amt])=>{
+        const pct = totalExp>0?Math.round(amt/totalExp*100):0;
+        const details = expGroupDetails[cat]||[];
+        const detailId = 'statExp_'+cat.replace(/\s/g,'_');
+        return `<div style="margin-bottom:10px">
+          <div onclick="toggleStatDetail('${detailId}')" style="cursor:pointer">
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+              <span style="font-size:12px;color:var(--text);font-weight:600">${cat}</span>
+              <span style="font-size:12px;font-weight:700;color:var(--red)">${fG(amt)} <span style="color:var(--text3);font-weight:400">${pct}%</span> <span style="color:var(--text3);font-size:10px">▾</span></span>
+            </div>
+            <div style="background:var(--bg2);border-radius:4px;height:5px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:var(--red);border-radius:4px"></div>
+            </div>
+          </div>
+          <div id="${detailId}" style="display:none;margin-top:6px;padding:8px;background:var(--bg2);border-radius:var(--rs)">
+            ${details.length?details.map(d=>`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)">
+              <span style="font-size:11px;color:var(--text2)">${d.name}${months.length>1?' ('+d.month+')':''}</span>
+              <span style="font-size:11px;font-weight:600;color:var(--red)">${fG(d.amt)}</span>
+            </div>`).join(''):'<div style="font-size:11px;color:var(--text3)">დეტალები არ არის</div>'}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  // Top insight
+  if(expEntries.length){
+    const top = expEntries[0];
+    const pct = totalExp>0?Math.round(top[1]/totalExp*100):0;
+    html += `<div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);border-radius:var(--r);padding:12px;margin-bottom:14px">
+      <div style="font-size:12px;color:var(--amber);font-weight:700;margin-bottom:4px">💡 ანალიტიკა</div>
+      <div style="font-size:13px;color:var(--text)">ყველაზე მეტი — <strong>${top[0]}</strong> — ${fG(top[1])} (${pct}% ჯამური გასავლიდან)</div>
+      ${saved<0?`<div style="font-size:12px;color:var(--red);margin-top:6px">⚠️ გასავალი ${fG(Math.abs(saved))}-ით აჭარბებს შემოსავალს</div>`:`<div style="font-size:12px;color:var(--green);margin-top:6px">✅ ${savedPct}% შემოსავლიდან დარჩა</div>`}
+    </div>`;
+  }
+
+  if(!incEntries.length && !expEntries.length){
+    html = '<div class="empty" style="padding-top:40px"><div class="empty-i">📊</div><p>ამ პერიოდში მონაცემები არ არის</p></div>';
+  }
+
+  el.innerHTML = html;
+}
+
+function toggleStatDetail(id){
+  const el = document.getElementById(id);
+  if(el) el.style.display = el.style.display==='none' ? 'block' : 'none';
+}
+
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 </script>
 
@@ -3453,19 +3775,23 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   </button>
   <button class="bnav-btn" id="bnavM" onclick="switchSheet('meetings')">
     <div class="bnav-ico">📅</div>
-    <div class="bnav-lbl">შეხვედრები</div>
+    <div class="bnav-lbl">შეხვედ.</div>
   </button>
   <button class="bnav-btn" id="bnavA" onclick="switchSheet('auto')">
     <div class="bnav-ico">🚗</div>
     <div class="bnav-lbl">ავტო</div>
   </button>
-  <button class="bnav-btn" id="bnavF" onclick="switchSheet('feedback')">
-    <div class="bnav-ico">💡</div>
-    <div class="bnav-lbl">იდეა</div>
-  </button>
   <button class="bnav-btn" id="bnavObl" onclick="switchSheet('obligations')">
     <div class="bnav-ico">🤝</div>
     <div class="bnav-lbl">ვალდებ.</div>
+  </button>
+  <button class="bnav-btn" id="bnavStat" onclick="switchSheet('statistics')">
+    <div class="bnav-ico">📊</div>
+    <div class="bnav-lbl">სტატისტ.</div>
+  </button>
+  <button class="bnav-btn" id="bnavF" onclick="switchSheet('feedback')">
+    <div class="bnav-ico">💡</div>
+    <div class="bnav-lbl">იდეა</div>
   </button>
 </div>
 
@@ -3474,7 +3800,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">📅 შეხვედრები</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.6</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.7</button>
     </div>
     <div class="profile-avatar" id="hdrAv_meet" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" style="flex-shrink:0"></div>
     <button class="btn bok" style="padding:7px 14px;font-size:13px" onclick="openM('mAddMeet')">+ დამატება</button>
@@ -3494,7 +3820,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">🚗 ავტო</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.6</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.7</button>
     </div>
     <div class="profile-avatar" id="hdrAv_auto" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" style="flex-shrink:0"></div>
     <button class="btn bok" style="padding:7px 14px;font-size:13px" onclick="openAddCarModal()">+ მანქანა</button>
@@ -3757,7 +4083,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">💡 შეცდომა / იდეა</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.6</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.7</button>
     </div>
     <div class="profile-avatar" id="hdrAv_idea" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" style="flex-shrink:0"></div>
     <button onclick="openM('modalChangelog')" style="background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);color:var(--accent);border-radius:20px;font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer;font-family:inherit">📋 ვერსიები</button>
@@ -3877,7 +4203,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
 
     <div style="background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.25);border-radius:var(--r);padding:14px;margin-bottom:12px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:15px;font-weight:700;color:var(--accent)">V_1.6 — მიმდინარე</div>
+        <div style="font-size:15px;font-weight:700;color:var(--accent)">V_1.7 — მიმდინარე</div>
         <span class="badge b-green">ახალი</span>
       </div>
       <div style="font-size:12px;color:var(--text2);line-height:1.8">
@@ -4043,7 +4369,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">🤝 ვალდებულებები</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.6</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.7</button>
     </div>
     <div class="profile-avatar" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" id="hdrAv_obl" style="flex-shrink:0"></div>
   </div>
@@ -4119,6 +4445,26 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
       <button class="btn bp" onclick="saveObl()">✓ შენახვა</button>
     </div>
   </div>
+</div>
+
+<!-- STATISTICS SHEET -->
+<div class="sheet" id="sheetStatistics">
+  <div class="app-hd">
+    <div>
+      <div class="app-t">📊 სტატისტიკა</div>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.7</button>
+    </div>
+    <div class="profile-avatar" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" id="hdrAv_stat" style="flex-shrink:0"></div>
+  </div>
+
+  <!-- Period filter -->
+  <div style="padding:0 16px 12px;display:flex;gap:8px">
+    <button class="btn" id="statPeriodM" onclick="setStatPeriod('month')" style="flex:1;font-size:12px;padding:7px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs)">თვე</button>
+    <button class="btn" id="statPeriodQ" onclick="setStatPeriod('quarter')" style="flex:1;font-size:12px;padding:7px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:var(--rs)">კვარტალი</button>
+    <button class="btn" id="statPeriodY" onclick="setStatPeriod('year')" style="flex:1;font-size:12px;padding:7px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:var(--rs)">წელი</button>
+  </div>
+
+  <div style="padding:0 16px;overflow-y:auto;padding-bottom:80px" id="statContent"></div>
 </div>
 </body>
 </html>
