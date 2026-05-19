@@ -213,48 +213,6 @@ select option{background:var(--bg3)}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyC_uSFyLyEfT2211wHSYbabM1tNbLuX_ow",
-    authDomain: "personal-manager-15511.firebaseapp.com",
-    projectId: "personal-manager-15511",
-    storageBucket: "personal-manager-15511.firebasestorage.app",
-    messagingSenderId: "376893272929",
-    appId: "1:376893272929:web:cefe1532c333f30aaf4b20"
-  };
-  firebase.initializeApp(firebaseConfig);
-  window._fbAuth = firebase.auth();
-  window._fbDb = firebase.firestore();
-  
-  // Cloud Messaging
-  try {
-    window._fbMsg = firebase.messaging();
-  } catch(e) {
-    console.log('Messaging not supported:', e);
-  }
-
-  window._fbAuth.onAuthStateChanged(async function(user){
-    if(user){
-      window._fbUser = user;
-      try {
-        const snap = await window._fbDb.collection('users').doc(user.uid).get();
-        if(snap.exists){
-          const data = snap.data();
-          if(data.appData){
-            try{ db = JSON.parse(data.appData); }catch(e){}
-            if(data.profile) db.user = data.profile;
-          }
-        }
-      } catch(e){ console.log('Firestore error:', e); }
-      window._fbReady = true;
-      if(window._onFbReady) window._onFbReady(user);
-    } else {
-      window._fbUser = null;
-      window._fbReady = true;
-      if(window._onFbReady) window._onFbReady(null);
-    }
-  });
-</script>
 </head>
 <body>
 <div class="toast" id="toast"></div>
@@ -264,7 +222,7 @@ select option{background:var(--bg3)}
   <div class="pw-inner">
     <div class="pw-logo">🔐</div>
     <div class="pw-title">Personal Manager</div>
-    <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:16px">V_1.3</div>
+    <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:16px">V_1.4</div>
     <div class="pw-sub" id="pwSub">შედი შენს ანგარიშში</div>
     <div class="pw-wrap" style="margin-bottom:10px">
       <input class="pw-inp" type="email" id="pwEmail" placeholder="ელ-ფოსტა" style="letter-spacing:normal">
@@ -392,16 +350,6 @@ select option{background:var(--bg3)}
       <div class="sr" onclick="changePw()"><div class="srl">🔐 პაროლის შეცვლა</div><div class="srv">→</div></div>
       <div class="sr" onclick="fbLogout()"><div class="srl" style="color:var(--red)">🚪 გამოსვლა</div><div class="srv" style="color:var(--red)">→</div></div>
     </div>
-    <div class="ss"><div class="sst">🌐 ენა / Language / Язык</div>
-      <div class="sr">
-        <div class="srl">ენა</div>
-        <select id="langSelector" onchange="setLang(this.value)" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:13px;padding:6px 10px;font-family:inherit">
-          <option value="ka">🇬🇪 ქართული</option>
-          <option value="en">🇬🇧 English</option>
-          <option value="ru">🇷🇺 Русский</option>
-        </select>
-      </div>
-    </div>
     <div class="ss"><div class="sst">შეტყობინებები</div>
       <div class="sr" onclick="requestNotifPermission()">
         <div><div class="srl">🔔 Push შეტყობინებები</div><div style="font-size:11px;color:var(--text2)" id="notifStatus">გამორთულია</div></div>
@@ -507,176 +455,606 @@ select option{background:var(--bg3)}
   </div>
 </div>
 
+
+
+<!-- BOTTOM NAV -->
+<div class="bnav" id="bnav" style="display:none">
+  <button class="bnav-btn active" id="bnavP" onclick="switchSheet('personal')">
+    <div class="bnav-ico">💼</div>
+    <div class="bnav-lbl">პირადი</div>
+  </button>
+  <button class="bnav-btn" id="bnavM" onclick="switchSheet('meetings')">
+    <div class="bnav-ico">📅</div>
+    <div class="bnav-lbl">შეხვედრები</div>
+  </button>
+  <button class="bnav-btn" id="bnavA" onclick="switchSheet('auto')">
+    <div class="bnav-ico">🚗</div>
+    <div class="bnav-lbl">ავტო</div>
+  </button>
+  <button class="bnav-btn" id="bnavF" onclick="switchSheet('feedback')">
+    <div class="bnav-ico">💡</div>
+    <div class="bnav-lbl">იდეა</div>
+  </button>
+</div>
+
+<!-- MEETINGS SHEET -->
+<div class="sheet" id="sheetMeetings">
+  <div class="app-hd">
+    <div>
+      <div class="app-t">📅 შეხვედრები</div>
+      <button onclick="openM('modalChangelog')" class="ver-lbl" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.4</button>
+    </div>
+    <button class="btn bok" style="padding:7px 14px;font-size:13px" onclick="openM('mAddMeet')">+ დამატება</button>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showMeetTab('main')">მთავარი</button>
+    <button class="tab" onclick="showMeetTab('all')">ყველა</button>
+    <button class="tab" onclick="showMeetTab('archive')">არქივი</button>
+  </div>
+  <div class="tb active" id="mtab-main" style="padding:14px"></div>
+  <div class="tb" id="mtab-all" style="padding:14px"></div>
+  <div class="tb" id="mtab-archive" style="padding:14px"></div>
+</div>
+
+<!-- AUTO SHEET (placeholder) -->
+<div class="sheet" id="sheetAuto">
+  <div class="app-hd">
+    <div>
+      <div class="app-t">🚗 ავტო</div>
+      <button onclick="openM('modalChangelog')" class="ver-lbl" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.4</button>
+    </div>
+    <button class="btn bok" style="padding:7px 14px;font-size:13px" onclick="openAddCarModal()">+ მანქანა</button>
+  </div>
+  <div class="tabs" id="autoTabs" style="display:none">
+    <button class="tab active" id="autoTab_garage" onclick="showAutoTab('garage')">🚗 გარაჟი</button>
+    <button class="tab" id="autoTab_archive" onclick="showAutoTab('archive')">📦 არქივი</button>
+  </div>
+  <div id="autoGarageView" style="padding:14px"></div>
+  <div id="autoArchiveView" style="padding:14px;display:none"></div>
+</div>
+
+<!-- CAR DETAIL SHEET -->
+<div class="sheet" id="sheetCarDetail">
+  <div class="app-hd">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button onclick="backToAuto()" style="background:none;border:none;cursor:pointer;color:var(--accent);font-size:20px;padding:0">←</button>
+      <div class="app-t" id="carDetailTitle">მანქანა</div>
+    </div>
+    <button class="btn bok" style="padding:7px 14px;font-size:13px" onclick="openAddServiceModal()">+ სერვისი</button>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showCarTab('dashboard')">📊 დეშბორდი</button>
+    <button class="tab" onclick="showCarTab('services')">🔧 სერვისები</button>
+    <button class="tab" onclick="showCarTab('fuel')">⛽ საწვავი</button>
+    <button class="tab" onclick="showCarTab('history')">📋 ისტორია</button>
+  </div>
+  <div class="tb active" id="ctab-dashboard" style="padding:14px"></div>
+  <div class="tb" id="ctab-services" style="padding:14px"></div>
+  <div class="tb" id="ctab-fuel" style="padding:14px"></div>
+  <div class="tb" id="ctab-history" style="padding:14px"></div>
+</div>
+
+<!-- ADD CAR MODAL -->
+<div class="overlay" id="modalAddCar">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">🚗 მანქანის დამატება</div>
+    <div class="r2">
+      <div class="fg"><label>მარკა</label><input type="text" id="car_make" placeholder="Toyota, BMW..."></div>
+      <div class="fg"><label>მოდელი</label><input type="text" id="car_model" placeholder="Camry, X5..."></div>
+    </div>
+    <div class="r2">
+      <div class="fg"><label>პაკეტი</label><input type="text" id="car_trim" placeholder="SE, Luxury..."></div>
+      <div class="fg"><label>წელი</label><input type="number" id="car_year" placeholder="2020" min="1900" max="2030"></div>
+    </div>
+    <div class="r2">
+      <div class="fg"><label>ძრავის მოცულობა</label>
+        <select id="car_engine" onchange="toggleEngineCustom()">
+          <option value="">— არ ვიცი</option>
+          <option value="1.0">1.0 ლ</option>
+          <option value="1.2">1.2 ლ</option>
+          <option value="1.4">1.4 ლ</option>
+          <option value="1.5">1.5 ლ</option>
+          <option value="1.6">1.6 ლ</option>
+          <option value="1.8">1.8 ლ</option>
+          <option value="2.0">2.0 ლ</option>
+          <option value="2.2">2.2 ლ</option>
+          <option value="2.4">2.4 ლ</option>
+          <option value="2.5">2.5 ლ</option>
+          <option value="2.7">2.7 ლ</option>
+          <option value="3.0">3.0 ლ</option>
+          <option value="3.5">3.5 ლ</option>
+          <option value="4.0">4.0 ლ</option>
+          <option value="4.6">4.6 ლ</option>
+          <option value="5.0">5.0 ლ</option>
+          <option value="custom">სხვა (ჩავწერ)</option>
+        </select>
+      </div>
+      <div class="fg" id="car_engine_custom_wrap" style="display:none">
+        <label>მოცულობა (ლ)</label>
+        <input type="number" id="car_engine_custom" placeholder="1.6" min="0" step="0.1">
+      </div>
+    </div>
+    <div class="r2">
+      <div class="fg"><label>გადაცემათა კოლოფი</label>
+        <select id="car_trans">
+          <option value="auto">⚙️ ავტომატი</option>
+          <option value="manual">🔧 მექანიკა</option>
+          <option value="cvt">〰️ CVT</option>
+          <option value="robot">🤖 რობოტი</option>
+        </select>
+      </div>
+      <div class="fg"><label>საწვავი</label>
+        <select id="car_fuel">
+          <option value="petrol">⛽ ბენზინი</option>
+          <option value="diesel">🛢 დიზელი</option>
+          <option value="hybrid">🔋 ჰიბრიდი</option>
+          <option value="electric">⚡ ელექტრო</option>
+          <option value="lpg">🔵 გაზი (თხევადი)</option>
+          <option value="cng">🟡 გაზი (ბუნებრივი)</option>
+        </select>
+      </div>
+    </div>
+    <div class="r2">
+      <div class="fg"><label>ყიდვის თარიღი</label><input type="date" id="car_buy_date"></div>
+      <div class="fg"><label>ყიდვის გარბენი (კმ)</label><input type="number" id="car_buy_mileage" placeholder="0" min="0"></div>
+    </div>
+    <div class="fg"><label>მიმდინარე გარბენი (კმ)</label><input type="number" id="car_mileage" placeholder="0" min="0" style="font-size:17px;padding:11px 13px"></div>
+    <div class="r2">
+      <div class="fg"><label>ფერი</label><input type="text" id="car_color" placeholder="თეთრი, შავი..."></div>
+      <div class="fg"><label>VIN ნომერი</label><input type="text" id="car_vin" placeholder="სურვილისამებრ"></div>
+    </div>
+    <div class="fg"><label>შენიშვნა</label><input type="text" id="car_note" placeholder="სხვა ინფო..."></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn bs" onclick="closeM('modalAddCar')">გაუქმება</button>
+      <button class="btn bp" onclick="saveCar()">შენახვა</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD SERVICE MODAL -->
+<div class="overlay" id="modalAddService">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">🔧 სერვისის დამატება</div>
+    <div class="fg"><label>კატეგორია</label>
+      <select id="svc_cat" onchange="updateSvcItems()"></select>
+    </div>
+    <div class="fg"><label>სერვისი</label>
+      <select id="svc_item" onchange="updateSvcDefaults()"></select>
+    </div>
+    <div class="fg" id="svc_custom_wrap" style="display:none">
+      <label>დასახელება</label>
+      <input type="text" id="svc_custom_name" placeholder="სერვისის სახელი">
+    </div>
+    <div class="fg"><label>თარიღი</label><input type="date" id="svc_date"></div>
+    <div class="fg"><label>გარბენი სერვისის დროს (კმ)</label>
+      <input type="number" id="svc_mileage" placeholder="0" min="0" style="font-size:17px;padding:11px 13px" oninput="updateSvcNextMileage()">
+    </div>
+    <div class="fg"><label>ღირებულება</label>
+      <div style="display:flex;gap:6px">
+        <input type="number" id="svc_cost" placeholder="0" min="0" style="flex:1;font-size:16px;padding:10px 12px">
+        <select id="svc_cost_cur" style="width:90px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:13px;padding:9px 6px">
+          <option value="GEL">₾ ლარი</option>
+          <option value="USD">$ USD</option>
+          <option value="EUR">€ EUR</option>
+        </select>
+      </div>
+    </div>
+    <div style="background:var(--bg3);border-radius:var(--rs);padding:12px;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;margin-bottom:8px">⏰ შეხსენება</div>
+      <div class="r2">
+        <div class="fg"><label>კმ-ით (შემდეგ სერვისამდე)</label>
+          <input type="number" id="svc_next_km" placeholder="10000" min="0" oninput="updateSvcNextMileage()">
+        </div>
+        <div class="fg"><label>დღეებით</label>
+          <input type="number" id="svc_next_days" placeholder="365" min="0">
+        </div>
+      </div>
+      <div id="svc_next_mileage_display" style="font-size:12px;color:var(--accent);margin-top:4px"></div>
+    </div>
+    <div class="fg"><label>სერვის ცენტრი</label><input type="text" id="svc_center" placeholder="სახელი / მისამართი"></div>
+    <div class="fg"><label>შენიშვნა</label><input type="text" id="svc_note" placeholder="დამატებითი ინფო..."></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn bs" onclick="closeM('modalAddService')">გაუქმება</button>
+      <button class="btn bp" onclick="saveService()">შენახვა</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD FUEL MODAL -->
+<div class="overlay" id="modalAddFuel">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">⛽ გასამართი</div>
+    <div class="fg"><label>თარიღი</label><input type="date" id="fuel_date"></div>
+    <div class="r2">
+      <div class="fg"><label>ლიტრი</label><input type="number" id="fuel_liters" placeholder="0" min="0" step="0.1" oninput="calcFuelTotal()"></div>
+      <div class="fg"><label>1 ლიტრის ფასი</label><input type="number" id="fuel_price" placeholder="0" min="0" step="0.01" oninput="calcFuelTotal()"></div>
+    </div>
+    <div class="fg"><label>ჯამი</label>
+      <div id="fuel_total_display" style="font-size:18px;font-weight:700;color:var(--green);padding:10px 0">— ₾</div>
+    </div>
+    <div class="fg"><label>გარბენი (კმ)</label><input type="number" id="fuel_mileage" placeholder="0" min="0" style="font-size:17px;padding:11px 13px"></div>
+    <div class="fg"><label>სადგური</label><input type="text" id="fuel_station" placeholder="Gulf, Wissol..."></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn bs" onclick="closeM('modalAddFuel')">გაუქმება</button>
+      <button class="btn bp" onclick="saveFuel()">შენახვა</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPDATE MILEAGE MODAL -->
+<div class="overlay" id="modalMileage">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">📍 გარბენის განახლება</div>
+    <div class="fg"><label>მიმდინარე გარბენი (კმ)</label>
+      <input type="number" id="upd_mileage" placeholder="0" min="0" style="font-size:22px;padding:13px 14px;font-weight:700">
+    </div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">განახლდება სერვისების სტატუსი და შეხსენებები</p>
+    <div style="display:flex;gap:8px">
+      <button class="btn bs" onclick="closeM('modalMileage')">გაუქმება</button>
+      <button class="btn bp" onclick="saveMileage()">განახლება</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MEETING MODAL -->
+<div class="overlay" id="mAddMeet">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">📅 შეხვედრის დამატება</div>
+    <div class="fg"><label>დასახელება</label><input type="text" id="meet_n" placeholder="შეხვედრის სახელი"></div>
+    <div class="fg"><label>კატეგორია</label>
+      <select id="meet_cat" onchange="toggleMeetCat()">
+        <option value="personal">👤 პირადი</option>
+        <option value="group">👥 ჯგუფური</option>
+        <option value="party">🥂 ქეიფი</option>
+      </select>
+    </div>
+    <div class="fg"><label>განრიგი</label>
+      <select id="meet_type" onchange="toggleMeetType()">
+        <option value="date">📅 კონკრეტული თარიღი</option>
+        <option value="free">🟢 თავისუფალ დროს</option>
+        <option value="weekend">🟣 შაბათ-კვირას</option>
+      </select>
+    </div>
+    <div id="meet_participants_wrap" style="display:none">
+      <label style="font-size:11px;color:var(--text2);font-weight:700;letter-spacing:.5px;display:block;margin-bottom:6px">მონაწილეები</label>
+      <div id="participantsList"></div>
+      <button class="btn bg" style="margin-top:6px;margin-bottom:10px" onclick="addParticipant()">+ მონაწილის დამატება</button>
+    </div>
+    <div id="meet_products_wrap" style="display:none">
+      <label style="font-size:11px;color:var(--text2);font-weight:700;letter-spacing:.5px;display:block;margin-bottom:6px">🛒 პროდუქტები</label>
+      <div id="productsList"></div>
+      <button class="btn bg" style="margin-top:6px" onclick="addProduct()">+ პროდუქტის დამატება</button>
+      <div id="productsTotal" style="display:none;margin-top:10px;padding:10px;background:var(--bg3);border-radius:var(--rs);font-size:14px;font-weight:700;color:var(--green);text-align:right"></div>
+    </div>
+    <div id="meet_date_wrap" class="fg">
+      <label>თარიღი</label>
+      <input type="date" id="meet_date">
+    </div>
+    <div id="meet_time_wrap" class="fg">
+      <label>დრო (სურვილისამებრ)</label>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="time" id="meet_time_from" style="flex:1">
+        <span style="color:var(--text2);font-size:13px;white-space:nowrap">— დან</span>
+        <input type="time" id="meet_time_to" style="flex:1">
+        <span style="color:var(--text2);font-size:13px;white-space:nowrap">— მდე</span>
+      </div>
+    </div>
+    <div class="fg"><label>შენიშვნა (სურვილისამებრ)</label><input type="text" id="meet_note" placeholder="ადგილი ან სხვა დეტალი"></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn bs" onclick="closeM('mAddMeet')">გაუქმება</button>
+      <button class="btn bp" onclick="saveMeet()">შენახვა</button>
+    </div>
+  </div>
+</div>
+<!-- FEEDBACK SHEET -->
+<div class="sheet" id="sheetFeedback">
+  <div class="app-hd">
+    <div>
+      <div class="app-t">💡 შეცდომა / იდეა</div>
+      <button onclick="openM('modalChangelog')" class="ver-lbl" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.4</button>
+    </div>
+    <button onclick="openM('modalChangelog')" style="background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);color:var(--accent);border-radius:20px;font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer;font-family:inherit">📋 ვერსიები</button>
+  </div>
+  <div style="padding:14px">
+    <!-- ADD FORM -->
+    <div class="sc">
+      <div class="sc-h"><div class="sc-t">ახალი ჩანაწერი</div></div>
+      <div class="sc-b">
+        <div class="r2" style="margin-bottom:10px">
+          <div class="fg">
+            <label>თემა</label>
+            <select id="fb_topic">
+              <option value="personal">💼 პირადი</option>
+              <option value="meetings">📅 შეხვედრები</option>
+              <option value="auto">🚗 ავტო</option>
+              <option value="app">📱 სრული აპლიკაცია</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>ტიპი</label>
+            <select id="fb_type">
+              <option value="idea">💡 იდეა</option>
+              <option value="bug">🐛 ხარვეზი</option>
+              <option value="question">❓ კითხვა</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg">
+          <label>აღწერა</label>
+          <textarea id="fb_text" placeholder="კონკრეტული იდეა ან ხარვეზის აღწერა..." style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:14px;padding:10px 12px;font-family:inherit;outline:none;resize:vertical;min-height:90px;line-height:1.5" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+        </div>
+        <button class="btn bp" style="margin-top:4px" onclick="saveFeedback()">+ დამატება</button>
+      </div>
+    </div>
+
+    <!-- LIST -->
+    <div class="sc">
+      <div class="sc-h">
+        <div class="sc-t">ჩანაწერები</div>
+        <div style="display:flex;gap:6px">
+          <select id="fb_filter_topic" onchange="renderFeedback()" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:11px;padding:4px 6px">
+            <option value="">ყველა</option>
+            <option value="personal">💼 პირადი</option>
+            <option value="meetings">📅 შეხვედრები</option>
+            <option value="auto">🚗 ავტო</option>
+            <option value="app">📱 სრული აპლიკაცია</option>
+          </select>
+          <select id="fb_filter_type" onchange="renderFeedback()" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:11px;padding:4px 6px">
+            <option value="">ყველა</option>
+            <option value="idea">💡 იდეა</option>
+            <option value="bug">🐛 ხარვეზი</option>
+            <option value="question">❓ კითხვა</option>
+          </select>
+        </div>
+      </div>
+      <div class="sc-b" id="fbList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK PAY MODAL -->
+<div class="overlay" id="modalQuickPay">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">💸 სწრაფი გადახდა</div>
+
+    <!-- Template shortcuts -->
+    <div style="margin-bottom:12px">
+      <label style="font-size:11px;color:var(--text2);font-weight:700;letter-spacing:.5px;display:block;margin-bottom:8px">სწრაფი შაბლონი</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px" id="qpTemplates">
+        <button class="qp-tpl" onclick="addQPItem('კვება 🍽')">🍽 კვება</button>
+        <button class="qp-tpl" onclick="addQPItem('სიგარეტი 🚬')">🚬 სიგარეტი</button>
+        <button class="qp-tpl" onclick="addQPItem('ყავა ☕')">☕ ყავა</button>
+        <button class="qp-tpl" onclick="addQPItem('ტაქსი 🚕')">🚕 ტაქსი</button>
+        <button class="qp-tpl" onclick="addQPItem('აფთიაქი 💊')">💊 აფთიაქი</button>
+        <button class="qp-tpl" onclick="addQPItem('სუპერმარკეტი 🛒')">🛒 სუპერმარ.</button>
+        <button class="qp-tpl" onclick="addQPItem('საწვავი ⛽')">⛽ საწვავი</button>
+        <button class="qp-tpl" onclick="addQPItem('სასმელი 🥤')">🥤 სასმელი</button>
+        <button class="qp-tpl" onclick="addQPItem('გართობა 🎮')">🎮 გართობა</button>
+        <button class="qp-tpl" onclick="addQPItem('ტანსაცმელი 👕')">👕 ტანსაცმელი</button>
+        <button class="qp-tpl" onclick="addQPItem('სილამაზე 💄')">💄 სილამაზე</button>
+        <button class="qp-tpl" onclick="addQPItem('სხვა ✏️')">✏️ სხვა</button>
+      </div>
+    </div>
+
+    <!-- Items list -->
+    <div id="qpItems" style="margin-bottom:10px"></div>
+
+    <!-- Add custom -->
+    <button class="btn bg" style="margin-bottom:12px" onclick="addQPItem('')">+ დამატება</button>
+
+    <!-- Date -->
+    <div class="fg" style="margin-bottom:12px">
+      <label>თარიღი</label>
+      <input type="date" id="qp_date">
+    </div>
+
+    <!-- Total -->
+    <div style="background:var(--bg3);border-radius:var(--rs);padding:12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13px;font-weight:700;color:var(--text2)">💰 ჯამი</span>
+      <span style="font-size:20px;font-weight:700;color:var(--red)" id="qpTotal">0.00 ₾</span>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button class="btn bs" onclick="closeM('modalQuickPay')">გაუქმება</button>
+      <button class="btn bp" onclick="saveQuickPay()">✓ გადახდა და შესყიდვებში</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGELOG MODAL -->
+<div class="overlay" id="modalChangelog">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">📋 ვერსიების ისტორია</div>
+
+    <div style="background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.25);border-radius:var(--r);padding:14px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:15px;font-weight:700;color:var(--accent)">V_1.4 — მიმდინარე</div>
+        <span class="badge b-green">ახალი</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        ✅ 3 ენა — 🇬🇪 ქართული, 🇬🇧 English, 🇷🇺 Русский<br>
+        ✅ Firebase Auth — რეგისტრაცია, შესვლა, პაროლის აღდგენა<br>
+        ✅ Firestore Cloud — მონაცემები ნებისმიერი მოწყობილობიდან<br>
+        ✅ GitHub Pages — PWA (Home Screen-ზე დამატება)<br>
+        ✅ შეხვედრების კალენდარი — დაგეგმილი დღეები მონიშნულია<br>
+        ✅ კალენდარის დღეზე დაჭერა — იმ დღის შეხვედრები<br>
+        ✅ ვადაგასული შეხვედრები — შედგა/გადაიდო popup<br>
+        ✅ ავტოს ჯანმრთელობა — მხოლოდ უახლესი სერვისი ითვლება<br>
+        ✅ 100%-ისთვის საჭირო სერვისების სია<br>
+        ✅ სერვისის შეცვლისას ძველი ავტომატურად არქივში<br>
+        ✅ სესხები და ფიქსირებული ხარჯები — "თვის" tab-ში<br>
+        ✅ გადახდის სტატუსი — "გადახდილი/გადახდა" ღილაკი<br>
+        ✅ სწრაფი გადახდა — მთავარ გვერდზე<br>
+        🐛 მონაცემების შენახვის პრობლემა გამოსწორდა<br>
+        🐛 თვის მაჩვენებელი ყოველთვის ჩანს<br>
+        🐛 Firestore Rules — ვადაგასული წესები შეიცვალა
+      </div>
+    </div>
+
+    <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">V_1.3</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        ✅ ავტოს მოდული — სერვისები, საწვავი, ისტორია<br>
+        ✅ შეხვედრების მოდული — პირადი, ჯგუფური, ქეიფი<br>
+        ✅ სწრაფი გადახდა — 12 შაბლონი<br>
+        ✅ ექსპორტი / იმპორტი<br>
+        🐛 ნავიგაციის გამოსწორება
+      </div>
+    </div>
+
+    <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">V_1.2</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        ✅ ავტოს მოდული (საწყისი ვერსია)<br>
+        ✅ შეცდომა/იდეა შიტი<br>
+        ✅ ქვედა ნავიგაცია (4 შიტი)<br>
+        ✅ მანქანის ჯანმრთელობის ქულა<br>
+        🐛 switchSheet ბაგის გამოსწორება
+      </div>
+    </div>
+
+    <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">V_1.1</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        ✅ შეხვედრების მოდული<br>
+        ✅ პაროლის სისტემა<br>
+        ✅ კომუნალურების თვიური შეყვანა<br>
+        ✅ დასადასტურებელი ოპერაციები<br>
+        ✅ შესყიდვების მოდული
+      </div>
+    </div>
+
+    <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:16px">
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">V_1.0</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        ✅ ფინანსების მოდული (საწყისი)<br>
+        ✅ Setup სისტემა<br>
+        ✅ ბალანსი, შემოსავლები, გასავლები<br>
+        ✅ სესხები, კომუნალური, ფიქსირებული
+      </div>
+    </div>
+
+    <button class="btn bp" onclick="closeM('modalChangelog')">დახურვა</button>
+  </div>
+</div>
+
+<!-- REGISTRATION SCREEN -->
+<div class="screenc" id="scRegister" style="display:none">
+  <div class="pw-inner" style="max-width:380px">
+    <div class="pw-logo">👤</div>
+    <div class="pw-title" style="margin-bottom:4px">რეგისტრაცია</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:20px">შექმენი ანგარიში</div>
+
+    <div style="width:100%;margin-bottom:10px">
+      <div class="r2" style="margin-bottom:10px">
+        <div class="fg">
+          <label>სახელი *</label>
+          <input type="text" id="reg_fname" placeholder="პაატა" style="font-size:15px;padding:11px 13px">
+        </div>
+        <div class="fg">
+          <label>გვარი *</label>
+          <input type="text" id="reg_lname" placeholder="მაგალითი" style="font-size:15px;padding:11px 13px">
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:10px">
+        <label>დაბადების თარიღი *</label>
+        <input type="date" id="reg_bdate" style="font-size:15px;padding:11px 13px">
+      </div>
+      <div class="fg" style="margin-bottom:10px">
+        <label>ელ-ფოსტა *</label>
+        <input type="email" id="reg_email" placeholder="example@gmail.com" style="font-size:15px;padding:11px 13px">
+      </div>
+      <div class="fg" style="margin-bottom:10px">
+        <label>მობილური *</label>
+        <input type="tel" id="reg_phone" placeholder="+995 5XX XXX XXX" style="font-size:15px;padding:11px 13px">
+      </div>
+      <div class="fg" style="margin-bottom:10px">
+        <label>პაროლი * (მინ. 4 სიმბ.)</label>
+        <div class="pw-wrap" style="margin-bottom:0">
+          <input class="pw-inp" type="password" id="reg_pw" placeholder="••••••••" style="font-size:15px">
+          <button class="pw-eye" onclick="toggleRegEye()">👁</button>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:16px">
+        <label>პაროლის გამეორება *</label>
+        <input type="password" id="reg_pw2" placeholder="••••••••" style="width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-size:15px;padding:13px 16px;font-family:inherit;outline:none">
+      </div>
+      <div id="reg_err" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none"></div>
+      <button class="pw-btn" onclick="submitRegister()">✓ რეგისტრაცია</button>
+    </div>
+    <button class="auth-link" style="margin-top:12px" onclick="showLogin()">← უკან შესვლაზე</button>
+  </div>
+</div>
+
+<!-- FORGOT PASSWORD SCREEN -->
+<div class="screenc" id="scForgot" style="display:none">
+  <div class="pw-inner">
+    <div class="pw-logo">🔑</div>
+    <div class="pw-title" style="margin-bottom:4px">პაროლის შეცვლა</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:20px">შეიყვანე სარეგისტრაციო ინფო</div>
+    <div style="width:100%">
+      <div class="fg" style="margin-bottom:16px">
+        <label>ელ-ფოსტა</label>
+        <input type="email" id="forgot_contact" placeholder="example@gmail.com" style="font-size:15px;padding:11px 13px;width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:inherit;outline:none">
+      </div>
+      <div id="forgot_err" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none"></div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:14px">პაროლის აღდგენის ბმული გაიგზავნება შენს ელ-ფოსტაზე</p>
+      <button class="pw-btn" onclick="submitForgot()">📧 ბმულის გაგზავნა</button>
+    </div>
+    <button class="auth-link" style="margin-top:12px" onclick="showLogin()">← უკან შესვლაზე</button>
+  </div>
+</div>
+
+
+
+<!-- ADD LOAN MODAL -->
+<div class="overlay" id="mAddLoan">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">🏦 სესხის დამატება</div>
+    <div class="fg"><label>სახელი</label><input type="text" id="loan_n" placeholder="სახლის სესხი, მანქანის სესხი..."></div>
+    <div class="r2">
+      <div class="fg"><label>თვიური გადასახადი</label><input type="number" id="loan_a" placeholder="0" min="0"></div>
+      <div class="fg"><label>ვალუტა</label><select id="loan_c"><option value="GEL">₾ ლარი</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option></select></div>
+    </div>
+    <div class="r2">
+      <div class="fg"><label>გადახდის რიცხვი</label><select id="loan_d"><option value="">—</option></select></div>
+      <div class="fg"><label>დასრულება (სურვ.)</label><input type="month" id="loan_e"></div>
+    </div>
+    <div class="fg"><label>დარჩენილი ვალი (სურვ.)</label><input type="number" id="loan_t" placeholder="0" min="0"></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn bs" onclick="closeM('mAddLoan')">გაუქმება</button>
+      <button class="btn bp" onclick="saveLoanModal()">✓ დამატება</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD FIXED EXPENSE MODAL -->
+<div class="overlay" id="mAddFixed">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">📌 ფიქსირებული ხარჯის დამატება</div>
+    <div class="fg"><label>სახელი</label><input type="text" id="fixed_n" placeholder="ინტერნეტი, სადაზღვევო..."></div>
+    <div class="r3">
+      <div class="fg"><label>თანხა</label><input type="number" id="fixed_a" placeholder="0" min="0"></div>
+      <div class="fg"><label>ვალუტა</label><select id="fixed_c"><option value="GEL">₾ ლარი</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option></select></div>
+      <div class="fg"><label>გადახდის რიცხვი</label><select id="fixed_d"><option value="">—</option></select></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn bs" onclick="closeM('mAddFixed')">გაუქმება</button>
+      <button class="btn bp" onclick="saveFixedModal()">✓ დამატება</button>
+    </div>
+  </div>
+</div>
+</body>
 <script>
-
-// ══════════════════════════════════════════
-// TRANSLATIONS V_1.4
-// ══════════════════════════════════════════
-const LANGS = {
-  ka: {
-    // Nav
-    personal:'პირადი', meetings:'შეხვედრები', auto:'ავტო', idea:'იდეა',
-    // Personal
-    manager:'მენეჯერი', main:'მთავარი', month:'თვე', expenses:'გასავ.',
-    purchases:'შესყიდ.', archive:'არქივი', settings:'⚙️',
-    balance:'ბალანსი', income:'შემოსავალი', expense:'გასავალი',
-    quick_pay:'სწრაფი გადახდა',
-    monthly_income:'ყოველთვიური შემოსავლები',
-    loans:'სესხები', fixed_exp:'ფიქსირებული გასავლები',
-    utilities:'კომუნალური — ამ თვეში',
-    one_time_inc:'ერთჯერადი შემოსავლები',
-    one_time_exp:'ერთჯერადი ხარჯები',
-    planned_purch:'დაგეგმილი შესყიდვები',
-    add:'+ დამატება', save:'✓ შენახვა', cancel:'გაუქმება',
-    delete:'წაშლა', close:'დახურვა',
-    name:'სახელი', amount:'თანხა', currency:'ვალუტა', date:'თარიღი',
-    day:'რიცხვი', note:'შენიშვნა',
-    // Meetings
-    meet_main:'მთავარი', meet_all:'ყველა', meet_archive:'არქივი',
-    today:'📍 დღეს', next7:'📆 მომდევნო 7 დღე', flexible:'🔄 მოქნილი',
-    // Auto
-    dashboard:'📊 დეშბორდი', services:'🔧 სერვისები',
-    fuel:'⛽ საწვავი', history:'📋 ისტორია',
-    health:'❤️ მანქანის ჯანმრთელობა',
-    mileage:'გარბენი', next_service:'შემდეგი სერვისი',
-    for_100:'100%-ისთვის საჭირო სერვისები:',
-    // Settings
-    account:'ანგარიში', security:'უსაფრთხოება',
-    change_pw:'🔐 პაროლის შეცვლა', logout:'🚪 გამოსვლა',
-    notifications:'შეტყობინებები', push_notif:'🔔 Push შეტყობინებები',
-    enabled:'ჩართულია ✅', disabled:'გამორთულია', enable:'ჩართვა',
-    data_backup:'მონაცემების სარეზერვო ასლი',
-    export:'📤 ექსპორტი', import:'📥 იმპორტი',
-    language:'🌐 ენა', reset:'🗑 გადატვირთვა',
-    // Feedback
-    feedback_title:'შეცდომა / იდეა',
-    topic:'თემა', type:'ტიპი', description:'აღწერა',
-    send:'გაგზავნა',
-    // Common
-    no_data:'მონაცემი არ არის', loading:'იტვირთება...',
-    confirm_delete:'დარწმუნებული ხარ?', yes:'კი', no:'არა',
-    saved:'✅ შენახულია', deleted:'🗑 წაიშალა', added:'✅ დამატებულია',
-    error:'⚠️ შეცდომა', success:'✅ წარმატება',
-    version:'ვერსია',
-  },
-  en: {
-    personal:'Personal', meetings:'Meetings', auto:'Auto', idea:'Ideas',
-    manager:'Manager', main:'Main', month:'Month', expenses:'Expenses',
-    purchases:'Purchases', archive:'Archive', settings:'⚙️',
-    balance:'Balance', income:'Income', expense:'Expense',
-    quick_pay:'Quick Payment',
-    monthly_income:'Monthly Income',
-    loans:'Loans', fixed_exp:'Fixed Expenses',
-    utilities:'Utilities — This Month',
-    one_time_inc:'One-time Income',
-    one_time_exp:'One-time Expenses',
-    planned_purch:'Planned Purchases',
-    add:'+ Add', save:'✓ Save', cancel:'Cancel',
-    delete:'Delete', close:'Close',
-    name:'Name', amount:'Amount', currency:'Currency', date:'Date',
-    day:'Day', note:'Note',
-    meet_main:'Main', meet_all:'All', meet_archive:'Archive',
-    today:'📍 Today', next7:'📆 Next 7 Days', flexible:'🔄 Flexible',
-    dashboard:'📊 Dashboard', services:'🔧 Services',
-    fuel:'⛽ Fuel', history:'📋 History',
-    health:'❤️ Car Health',
-    mileage:'Mileage', next_service:'Next Service',
-    for_100:'Required for 100%:',
-    account:'Account', security:'Security',
-    change_pw:'🔐 Change Password', logout:'🚪 Logout',
-    notifications:'Notifications', push_notif:'🔔 Push Notifications',
-    enabled:'Enabled ✅', disabled:'Disabled', enable:'Enable',
-    data_backup:'Data Backup',
-    export:'📤 Export', import:'📥 Import',
-    language:'🌐 Language', reset:'🗑 Reset',
-    feedback_title:'Bugs / Ideas',
-    topic:'Topic', type:'Type', description:'Description',
-    send:'Send',
-    no_data:'No data', loading:'Loading...',
-    confirm_delete:'Are you sure?', yes:'Yes', no:'No',
-    saved:'✅ Saved', deleted:'🗑 Deleted', added:'✅ Added',
-    error:'⚠️ Error', success:'✅ Success',
-    version:'Version',
-  },
-  ru: {
-    personal:'Личное', meetings:'Встречи', auto:'Авто', idea:'Идеи',
-    manager:'Менеджер', main:'Главная', month:'Месяц', expenses:'Расходы',
-    purchases:'Покупки', archive:'Архив', settings:'⚙️',
-    balance:'Баланс', income:'Доход', expense:'Расход',
-    quick_pay:'Быстрый платёж',
-    monthly_income:'Ежемесячный доход',
-    loans:'Кредиты', fixed_exp:'Постоянные расходы',
-    utilities:'Коммунальные — этот месяц',
-    one_time_inc:'Разовый доход',
-    one_time_exp:'Разовые расходы',
-    planned_purch:'Запланированные покупки',
-    add:'+ Добавить', save:'✓ Сохранить', cancel:'Отмена',
-    delete:'Удалить', close:'Закрыть',
-    name:'Название', amount:'Сумма', currency:'Валюта', date:'Дата',
-    day:'Число', note:'Заметка',
-    meet_main:'Главная', meet_all:'Все', meet_archive:'Архив',
-    today:'📍 Сегодня', next7:'📆 Следующие 7 дней', flexible:'🔄 Гибко',
-    dashboard:'📊 Панель', services:'🔧 Сервисы',
-    fuel:'⛽ Топливо', history:'📋 История',
-    health:'❤️ Здоровье авто',
-    mileage:'Пробег', next_service:'Следующий сервис',
-    for_100:'Для 100% необходимо:',
-    account:'Аккаунт', security:'Безопасность',
-    change_pw:'🔐 Изменить пароль', logout:'🚪 Выйти',
-    notifications:'Уведомления', push_notif:'🔔 Push уведомления',
-    enabled:'Включено ✅', disabled:'Отключено', enable:'Включить',
-    data_backup:'Резервная копия данных',
-    export:'📤 Экспорт', import:'📥 Импорт',
-    language:'🌐 Язык', reset:'🗑 Сброс',
-    feedback_title:'Ошибки / Идеи',
-    topic:'Тема', type:'Тип', description:'Описание',
-    send:'Отправить',
-    no_data:'Нет данных', loading:'Загрузка...',
-    confirm_delete:'Вы уверены?', yes:'Да', no:'Нет',
-    saved:'✅ Сохранено', deleted:'🗑 Удалено', added:'✅ Добавлено',
-    error:'⚠️ Ошибка', success:'✅ Успешно',
-    version:'Версия',
-  }
-};
-
-let currentLang = 'ka';
-function t(key){ return (LANGS[currentLang]||LANGS.ka)[key] || (LANGS.ka)[key] || key; }
-function setLang(lang){
-  currentLang = lang;
-  db.lang = lang;
-  save();
-  applyLang();
-  renderAll();
-}
-
-function applyLang(){
-  // bottom nav
-  const bnavLabels = {
-    bnavP: t('personal'), bnavM: t('meetings'),
-    bnavA: t('auto'), bnavF: t('idea')
-  };
-  Object.entries(bnavLabels).forEach(([id,label])=>{
-    const el=document.getElementById(id);
-    if(el){const lbl=el.querySelector('.bnav-lbl');if(lbl)lbl.textContent=label;}
-  });
-  // tabs in personal
-  const tabLabels=[t('main'),t('month'),t('expenses'),t('purchases'),t('archive'),t('settings')];
-  document.querySelectorAll('#scApp .tab').forEach((tab,i)=>{
-    if(tabLabels[i]) tab.textContent=tabLabels[i];
-  });
-  // meetings tabs
-  const mTabLabels=[t('meet_main'),t('meet_all'),t('meet_archive')];
-  document.querySelectorAll('#sheetMeetings .tab').forEach((tab,i)=>{
-    if(mTabLabels[i]) tab.textContent=mTabLabels[i];
-  });
-  // version label
-  document.querySelectorAll('.ver-lbl').forEach(el=>{
-    el.textContent='Personal Manager V_1.4';
-  });
-  // settings section titles
-  const langSel=document.getElementById('langSelector');
-  if(langSel) langSel.value=currentLang;
-}
 
 const GEO=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];
 const CS={GEL:'₾',USD:'$',EUR:'€'};
@@ -940,8 +1318,6 @@ function enterApp(){
   cY=new Date().getFullYear();
   cM=new Date().getMonth();
   // apply saved language
-  if(db.lang) currentLang=db.lang;
-  applyLang();
 
   updateSetInputs();
   renderAll();
@@ -1133,11 +1509,11 @@ function renderAll(){
 
   const mlblEl=document.getElementById('mlbl');
   if(mlblEl) mlblEl.textContent=GEO[cM]+' '+cY;
-  const t=calcTotals();
-  document.getElementById('bNum').textContent=fG(t.balance);
-  document.getElementById('bIn').textContent=fG(t.income);
-  document.getElementById('bOut').textContent=fG(t.expense);
-  renderNotifs();renderChart(t);renderUpcoming();
+  const tots=calcTotals();
+  document.getElementById('bNum').textContent=fG(tots.balance);
+  document.getElementById('bIn').textContent=fG(tots.income);
+  document.getElementById('bOut').textContent=fG(tots.expense);
+  renderNotifs();renderChart(tots);renderUpcoming();
   renderCorr();renderExp();renderPaidArchive();renderPurch();renderArch();
 }
 
@@ -1308,7 +1684,7 @@ function renderCorr(){
   if(!db.setup) db.setup={monthlyIncomes:[],loans:[],utilities:[],fixedExpenses:[],currency:'GEL'};
   const md=getMD();
   const el1=document.getElementById('crrInc');
-  if(!(db.setup.monthlyIncomes||[]).length){el1.innerHTML='<div class="empty"><p>შემოსავლები არ არის</p></div>';}
+  if(!(db.setup.monthlyIncomes||[]).length){el1.innerHTML=('<div class="empty"><p>'+'მონაცემი არ არის'+'</p></div>');}
   else el1.innerHTML=db.setup.monthlyIncomes.map(i=>{
     const conf=md.ci[i.id],ov=md.oi&&md.oi[i.id]!==undefined?md.oi[i.id]:i.amount;
     const badge=conf===true?'<span class="badge bg-green">✓ დარიცხულია</span>':conf===false?'<span class="badge bg-red">✗ არ დარიცხულა</span>':'<span class="badge bg-amber">⏳ მოლოდინში</span>';
@@ -1343,7 +1719,7 @@ function renderCorr(){
   if(elCL){
     const loans=db.setup.loans||[];
     const mdL=getMD();
-    if(!loans.length) elCL.innerHTML='<div class="empty"><p>სესხები არ არის — დაამატე "გასავ." tab-ში</p></div>';
+    if(!loans.length) elCL.innerHTML=('<div class="empty"><p>'+'მონაცემი არ არის'+'</p></div>');
     else elCL.innerHTML=loans.map(l=>{
       const paid=mdL.loansPaid&&mdL.loansPaid[l.id];
       return `<div class='li'><div class='li-l'><div class='li-ico' style='background:rgba(224,85,85,.1)'>🏦</div><div><div class='li-n'>${l.name}</div><div class='li-s'>${l.day?l.day+' რიცხვი':''}</div></div></div><div class='li-r'><div class='li-a red'>${fA(l.monthly,l.currency)}</div><button class='btn ${paid?"bg":"bs"}' style='margin-top:4px;padding:3px 8px;font-size:11px' onclick='toggleLoanPaid("${l.id}")'>${paid?'✓ გადახდილი':'გადახდა'}</button></div></div>`;
@@ -1355,7 +1731,7 @@ function renderCorr(){
   if(elCF){
     const fixed=db.setup.fixedExpenses||[];
     const mdF=getMD();
-    if(!fixed.length) elCF.innerHTML='<div class="empty"><p>ფიქსირებული ხარჯები არ არის — დაამატე "გასავ." tab-შ</p></div>';
+    if(!fixed.length) elCF.innerHTML=('<div class="empty"><p>'+'მონაცემი არ არის'+'</p></div>');
     else elCF.innerHTML=fixed.map(f=>{
       const paid=mdF.fixedPaid&&mdF.fixedPaid[f.id];
       return `<div class='li'><div class='li-l'><div class='li-ico' style='background:rgba(155,109,255,.1)'>📌</div><div><div class='li-n'>${f.name}</div><div class='li-s'>${f.day?f.day+' რიცხვი':''}</div></div></div><div class='li-r'><div class='li-a red'>${fA(f.amount,f.currency)}</div><button class='btn ${paid?"bg":"bs"}' style='margin-top:4px;padding:3px 8px;font-size:11px' onclick='toggleFixedPaid("${f.id}")'>${paid?'✓ გადახდილი':'გადახდა'}</button></div></div>`;
@@ -1875,9 +2251,9 @@ function renderMeetings(){
     let html=cal;
     if(!weekItems.length) html+=`<div class="empty" style="padding-top:10px"><div class="empty-i">📅</div><p>მომდევნო 7 დღეში შეხვედრები არ არის</p></div>`;
     else{
-      if(todayM.length) html+=`<div class="meet-hdr">📍 დღეს</div>`+todayM.map(m=>meetCard(m,typeInfo,today,true)).join('');
-      if(futureM.length) html+=`<div class="meet-hdr">📆 მომდევნო 7 დღე</div>`+futureM.map(m=>meetCard(m,typeInfo,today,false)).join('');
-      if(flexM.length) html+=`<div class="meet-hdr">🔄 მოქნილი</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
+      if(todayM.length) html+=`<div class="meet-hdr">${'📍 დღეს'}</div>`+todayM.map(m=>meetCard(m,typeInfo,today,true)).join('');
+      if(futureM.length) html+=`<div class="meet-hdr">${'📆 მომდევნო 7 დღე'}</div>`+futureM.map(m=>meetCard(m,typeInfo,today,false)).join('');
+      if(flexM.length) html+=`<div class="meet-hdr">${'🔄 მოქნილი'}</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
     }
     el.innerHTML=html;
     // add click handlers for calendar days
@@ -1900,9 +2276,9 @@ function renderMeetings(){
       else flexM.push(m);
     });
     let html='';
-    if(todayM.length) html+=`<div class="meet-hdr">📍 დღეს</div>`+todayM.map(m=>meetCard(m,typeInfo,today,true)).join('');
-    if(futureM.length) html+=`<div class="meet-hdr">📆 მომავალი</div>`+futureM.map(m=>meetCard(m,typeInfo,today,false)).join('');
-    if(flexM.length) html+=`<div class="meet-hdr">🔄 მოქნილი</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
+    if(todayM.length) html+=`<div class="meet-hdr">${'📍 დღეს'}</div>`+todayM.map(m=>meetCard(m,typeInfo,today,true)).join('');
+    if(futureM.length) html+=`<div class="meet-hdr">${'📆 მომდევნო 7 დღე'}</div>`+futureM.map(m=>meetCard(m,typeInfo,today,false)).join('');
+    if(flexM.length) html+=`<div class="meet-hdr">${'🔄 მოქნილი'}</div>`+flexM.map(m=>meetCard(m,typeInfo,today,false)).join('');
     el.innerHTML=html;
 
   } else if(tabId==='mtab-archive'){
@@ -3272,603 +3648,6 @@ function closeDayMeetings(){
   if(ov) ov.classList.remove('active');
 }
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
 </script>
-
-<!-- BOTTOM NAV -->
-<div class="bnav" id="bnav" style="display:none">
-  <button class="bnav-btn active" id="bnavP" onclick="switchSheet('personal')">
-    <div class="bnav-ico">💼</div>
-    <div class="bnav-lbl">პირადი</div>
-  </button>
-  <button class="bnav-btn" id="bnavM" onclick="switchSheet('meetings')">
-    <div class="bnav-ico">📅</div>
-    <div class="bnav-lbl">შეხვედრები</div>
-  </button>
-  <button class="bnav-btn" id="bnavA" onclick="switchSheet('auto')">
-    <div class="bnav-ico">🚗</div>
-    <div class="bnav-lbl">ავტო</div>
-  </button>
-  <button class="bnav-btn" id="bnavF" onclick="switchSheet('feedback')">
-    <div class="bnav-ico">💡</div>
-    <div class="bnav-lbl">იდეა</div>
-  </button>
-</div>
-
-<!-- MEETINGS SHEET -->
-<div class="sheet" id="sheetMeetings">
-  <div class="app-hd">
-    <div>
-      <div class="app-t">📅 შეხვედრები</div>
-      <button onclick="openM('modalChangelog')" class="ver-lbl" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.4</button>
-    </div>
-    <button class="btn bok" style="padding:7px 14px;font-size:13px" onclick="openM('mAddMeet')">+ დამატება</button>
-  </div>
-  <div class="tabs">
-    <button class="tab active" onclick="showMeetTab('main')">მთავარი</button>
-    <button class="tab" onclick="showMeetTab('all')">ყველა</button>
-    <button class="tab" onclick="showMeetTab('archive')">არქივი</button>
-  </div>
-  <div class="tb active" id="mtab-main" style="padding:14px"></div>
-  <div class="tb" id="mtab-all" style="padding:14px"></div>
-  <div class="tb" id="mtab-archive" style="padding:14px"></div>
-</div>
-
-<!-- AUTO SHEET (placeholder) -->
-<div class="sheet" id="sheetAuto">
-  <div class="app-hd">
-    <div>
-      <div class="app-t">🚗 ავტო</div>
-      <button onclick="openM('modalChangelog')" class="ver-lbl" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.4</button>
-    </div>
-    <button class="btn bok" style="padding:7px 14px;font-size:13px" onclick="openAddCarModal()">+ მანქანა</button>
-  </div>
-  <div class="tabs" id="autoTabs" style="display:none">
-    <button class="tab active" id="autoTab_garage" onclick="showAutoTab('garage')">🚗 გარაჟი</button>
-    <button class="tab" id="autoTab_archive" onclick="showAutoTab('archive')">📦 არქივი</button>
-  </div>
-  <div id="autoGarageView" style="padding:14px"></div>
-  <div id="autoArchiveView" style="padding:14px;display:none"></div>
-</div>
-
-<!-- CAR DETAIL SHEET -->
-<div class="sheet" id="sheetCarDetail">
-  <div class="app-hd">
-    <div style="display:flex;align-items:center;gap:10px">
-      <button onclick="backToAuto()" style="background:none;border:none;cursor:pointer;color:var(--accent);font-size:20px;padding:0">←</button>
-      <div class="app-t" id="carDetailTitle">მანქანა</div>
-    </div>
-    <button class="btn bok" style="padding:7px 14px;font-size:13px" onclick="openAddServiceModal()">+ სერვისი</button>
-  </div>
-  <div class="tabs">
-    <button class="tab active" onclick="showCarTab('dashboard')">📊 დეშბორდი</button>
-    <button class="tab" onclick="showCarTab('services')">🔧 სერვისები</button>
-    <button class="tab" onclick="showCarTab('fuel')">⛽ საწვავი</button>
-    <button class="tab" onclick="showCarTab('history')">📋 ისტორია</button>
-  </div>
-  <div class="tb active" id="ctab-dashboard" style="padding:14px"></div>
-  <div class="tb" id="ctab-services" style="padding:14px"></div>
-  <div class="tb" id="ctab-fuel" style="padding:14px"></div>
-  <div class="tb" id="ctab-history" style="padding:14px"></div>
-</div>
-
-<!-- ADD CAR MODAL -->
-<div class="overlay" id="modalAddCar">
-  <div class="modal">
-    <div class="mh"></div>
-    <div class="mt">🚗 მანქანის დამატება</div>
-    <div class="r2">
-      <div class="fg"><label>მარკა</label><input type="text" id="car_make" placeholder="Toyota, BMW..."></div>
-      <div class="fg"><label>მოდელი</label><input type="text" id="car_model" placeholder="Camry, X5..."></div>
-    </div>
-    <div class="r2">
-      <div class="fg"><label>პაკეტი</label><input type="text" id="car_trim" placeholder="SE, Luxury..."></div>
-      <div class="fg"><label>წელი</label><input type="number" id="car_year" placeholder="2020" min="1900" max="2030"></div>
-    </div>
-    <div class="r2">
-      <div class="fg"><label>ძრავის მოცულობა</label>
-        <select id="car_engine" onchange="toggleEngineCustom()">
-          <option value="">— არ ვიცი</option>
-          <option value="1.0">1.0 ლ</option>
-          <option value="1.2">1.2 ლ</option>
-          <option value="1.4">1.4 ლ</option>
-          <option value="1.5">1.5 ლ</option>
-          <option value="1.6">1.6 ლ</option>
-          <option value="1.8">1.8 ლ</option>
-          <option value="2.0">2.0 ლ</option>
-          <option value="2.2">2.2 ლ</option>
-          <option value="2.4">2.4 ლ</option>
-          <option value="2.5">2.5 ლ</option>
-          <option value="2.7">2.7 ლ</option>
-          <option value="3.0">3.0 ლ</option>
-          <option value="3.5">3.5 ლ</option>
-          <option value="4.0">4.0 ლ</option>
-          <option value="4.6">4.6 ლ</option>
-          <option value="5.0">5.0 ლ</option>
-          <option value="custom">სხვა (ჩავწერ)</option>
-        </select>
-      </div>
-      <div class="fg" id="car_engine_custom_wrap" style="display:none">
-        <label>მოცულობა (ლ)</label>
-        <input type="number" id="car_engine_custom" placeholder="1.6" min="0" step="0.1">
-      </div>
-    </div>
-    <div class="r2">
-      <div class="fg"><label>გადაცემათა კოლოფი</label>
-        <select id="car_trans">
-          <option value="auto">⚙️ ავტომატი</option>
-          <option value="manual">🔧 მექანიკა</option>
-          <option value="cvt">〰️ CVT</option>
-          <option value="robot">🤖 რობოტი</option>
-        </select>
-      </div>
-      <div class="fg"><label>საწვავი</label>
-        <select id="car_fuel">
-          <option value="petrol">⛽ ბენზინი</option>
-          <option value="diesel">🛢 დიზელი</option>
-          <option value="hybrid">🔋 ჰიბრიდი</option>
-          <option value="electric">⚡ ელექტრო</option>
-          <option value="lpg">🔵 გაზი (თხევადი)</option>
-          <option value="cng">🟡 გაზი (ბუნებრივი)</option>
-        </select>
-      </div>
-    </div>
-    <div class="r2">
-      <div class="fg"><label>ყიდვის თარიღი</label><input type="date" id="car_buy_date"></div>
-      <div class="fg"><label>ყიდვის გარბენი (კმ)</label><input type="number" id="car_buy_mileage" placeholder="0" min="0"></div>
-    </div>
-    <div class="fg"><label>მიმდინარე გარბენი (კმ)</label><input type="number" id="car_mileage" placeholder="0" min="0" style="font-size:17px;padding:11px 13px"></div>
-    <div class="r2">
-      <div class="fg"><label>ფერი</label><input type="text" id="car_color" placeholder="თეთრი, შავი..."></div>
-      <div class="fg"><label>VIN ნომერი</label><input type="text" id="car_vin" placeholder="სურვილისამებრ"></div>
-    </div>
-    <div class="fg"><label>შენიშვნა</label><input type="text" id="car_note" placeholder="სხვა ინფო..."></div>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn bs" onclick="closeM('modalAddCar')">გაუქმება</button>
-      <button class="btn bp" onclick="saveCar()">შენახვა</button>
-    </div>
-  </div>
-</div>
-
-<!-- ADD SERVICE MODAL -->
-<div class="overlay" id="modalAddService">
-  <div class="modal">
-    <div class="mh"></div>
-    <div class="mt">🔧 სერვისის დამატება</div>
-    <div class="fg"><label>კატეგორია</label>
-      <select id="svc_cat" onchange="updateSvcItems()"></select>
-    </div>
-    <div class="fg"><label>სერვისი</label>
-      <select id="svc_item" onchange="updateSvcDefaults()"></select>
-    </div>
-    <div class="fg" id="svc_custom_wrap" style="display:none">
-      <label>დასახელება</label>
-      <input type="text" id="svc_custom_name" placeholder="სერვისის სახელი">
-    </div>
-    <div class="fg"><label>თარიღი</label><input type="date" id="svc_date"></div>
-    <div class="fg"><label>გარბენი სერვისის დროს (კმ)</label>
-      <input type="number" id="svc_mileage" placeholder="0" min="0" style="font-size:17px;padding:11px 13px" oninput="updateSvcNextMileage()">
-    </div>
-    <div class="fg"><label>ღირებულება</label>
-      <div style="display:flex;gap:6px">
-        <input type="number" id="svc_cost" placeholder="0" min="0" style="flex:1;font-size:16px;padding:10px 12px">
-        <select id="svc_cost_cur" style="width:90px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:13px;padding:9px 6px">
-          <option value="GEL">₾ ლარი</option>
-          <option value="USD">$ USD</option>
-          <option value="EUR">€ EUR</option>
-        </select>
-      </div>
-    </div>
-    <div style="background:var(--bg3);border-radius:var(--rs);padding:12px;margin-bottom:10px">
-      <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;margin-bottom:8px">⏰ შეხსენება</div>
-      <div class="r2">
-        <div class="fg"><label>კმ-ით (შემდეგ სერვისამდე)</label>
-          <input type="number" id="svc_next_km" placeholder="10000" min="0" oninput="updateSvcNextMileage()">
-        </div>
-        <div class="fg"><label>დღეებით</label>
-          <input type="number" id="svc_next_days" placeholder="365" min="0">
-        </div>
-      </div>
-      <div id="svc_next_mileage_display" style="font-size:12px;color:var(--accent);margin-top:4px"></div>
-    </div>
-    <div class="fg"><label>სერვის ცენტრი</label><input type="text" id="svc_center" placeholder="სახელი / მისამართი"></div>
-    <div class="fg"><label>შენიშვნა</label><input type="text" id="svc_note" placeholder="დამატებითი ინფო..."></div>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn bs" onclick="closeM('modalAddService')">გაუქმება</button>
-      <button class="btn bp" onclick="saveService()">შენახვა</button>
-    </div>
-  </div>
-</div>
-
-<!-- ADD FUEL MODAL -->
-<div class="overlay" id="modalAddFuel">
-  <div class="modal">
-    <div class="mh"></div>
-    <div class="mt">⛽ გასამართი</div>
-    <div class="fg"><label>თარიღი</label><input type="date" id="fuel_date"></div>
-    <div class="r2">
-      <div class="fg"><label>ლიტრი</label><input type="number" id="fuel_liters" placeholder="0" min="0" step="0.1" oninput="calcFuelTotal()"></div>
-      <div class="fg"><label>1 ლიტრის ფასი</label><input type="number" id="fuel_price" placeholder="0" min="0" step="0.01" oninput="calcFuelTotal()"></div>
-    </div>
-    <div class="fg"><label>ჯამი</label>
-      <div id="fuel_total_display" style="font-size:18px;font-weight:700;color:var(--green);padding:10px 0">— ₾</div>
-    </div>
-    <div class="fg"><label>გარბენი (კმ)</label><input type="number" id="fuel_mileage" placeholder="0" min="0" style="font-size:17px;padding:11px 13px"></div>
-    <div class="fg"><label>სადგური</label><input type="text" id="fuel_station" placeholder="Gulf, Wissol..."></div>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn bs" onclick="closeM('modalAddFuel')">გაუქმება</button>
-      <button class="btn bp" onclick="saveFuel()">შენახვა</button>
-    </div>
-  </div>
-</div>
-
-<!-- UPDATE MILEAGE MODAL -->
-<div class="overlay" id="modalMileage">
-  <div class="modal">
-    <div class="mh"></div>
-    <div class="mt">📍 გარბენის განახლება</div>
-    <div class="fg"><label>მიმდინარე გარბენი (კმ)</label>
-      <input type="number" id="upd_mileage" placeholder="0" min="0" style="font-size:22px;padding:13px 14px;font-weight:700">
-    </div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">განახლდება სერვისების სტატუსი და შეხსენებები</p>
-    <div style="display:flex;gap:8px">
-      <button class="btn bs" onclick="closeM('modalMileage')">გაუქმება</button>
-      <button class="btn bp" onclick="saveMileage()">განახლება</button>
-    </div>
-  </div>
-</div>
-
-<!-- ADD MEETING MODAL -->
-<div class="overlay" id="mAddMeet">
-  <div class="modal">
-    <div class="mh"></div>
-    <div class="mt">📅 შეხვედრის დამატება</div>
-    <div class="fg"><label>დასახელება</label><input type="text" id="meet_n" placeholder="შეხვედრის სახელი"></div>
-    <div class="fg"><label>კატეგორია</label>
-      <select id="meet_cat" onchange="toggleMeetCat()">
-        <option value="personal">👤 პირადი</option>
-        <option value="group">👥 ჯგუფური</option>
-        <option value="party">🥂 ქეიფი</option>
-      </select>
-    </div>
-    <div class="fg"><label>განრიგი</label>
-      <select id="meet_type" onchange="toggleMeetType()">
-        <option value="date">📅 კონკრეტული თარიღი</option>
-        <option value="free">🟢 თავისუფალ დროს</option>
-        <option value="weekend">🟣 შაბათ-კვირას</option>
-      </select>
-    </div>
-    <div id="meet_participants_wrap" style="display:none">
-      <label style="font-size:11px;color:var(--text2);font-weight:700;letter-spacing:.5px;display:block;margin-bottom:6px">მონაწილეები</label>
-      <div id="participantsList"></div>
-      <button class="btn bg" style="margin-top:6px;margin-bottom:10px" onclick="addParticipant()">+ მონაწილის დამატება</button>
-    </div>
-    <div id="meet_products_wrap" style="display:none">
-      <label style="font-size:11px;color:var(--text2);font-weight:700;letter-spacing:.5px;display:block;margin-bottom:6px">🛒 პროდუქტები</label>
-      <div id="productsList"></div>
-      <button class="btn bg" style="margin-top:6px" onclick="addProduct()">+ პროდუქტის დამატება</button>
-      <div id="productsTotal" style="display:none;margin-top:10px;padding:10px;background:var(--bg3);border-radius:var(--rs);font-size:14px;font-weight:700;color:var(--green);text-align:right"></div>
-    </div>
-    <div id="meet_date_wrap" class="fg">
-      <label>თარიღი</label>
-      <input type="date" id="meet_date">
-    </div>
-    <div id="meet_time_wrap" class="fg">
-      <label>დრო (სურვილისამებრ)</label>
-      <div style="display:flex;align-items:center;gap:8px">
-        <input type="time" id="meet_time_from" style="flex:1">
-        <span style="color:var(--text2);font-size:13px;white-space:nowrap">— დან</span>
-        <input type="time" id="meet_time_to" style="flex:1">
-        <span style="color:var(--text2);font-size:13px;white-space:nowrap">— მდე</span>
-      </div>
-    </div>
-    <div class="fg"><label>შენიშვნა (სურვილისამებრ)</label><input type="text" id="meet_note" placeholder="ადგილი ან სხვა დეტალი"></div>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn bs" onclick="closeM('mAddMeet')">გაუქმება</button>
-      <button class="btn bp" onclick="saveMeet()">შენახვა</button>
-    </div>
-  </div>
-</div>
-<!-- FEEDBACK SHEET -->
-<div class="sheet" id="sheetFeedback">
-  <div class="app-hd">
-    <div>
-      <div class="app-t">💡 შეცდომა / იდეა</div>
-      <button onclick="openM('modalChangelog')" class="ver-lbl" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.4</button>
-    </div>
-    <button onclick="openM('modalChangelog')" style="background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);color:var(--accent);border-radius:20px;font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer;font-family:inherit">📋 ვერსიები</button>
-  </div>
-  <div style="padding:14px">
-    <!-- ADD FORM -->
-    <div class="sc">
-      <div class="sc-h"><div class="sc-t">ახალი ჩანაწერი</div></div>
-      <div class="sc-b">
-        <div class="r2" style="margin-bottom:10px">
-          <div class="fg">
-            <label>თემა</label>
-            <select id="fb_topic">
-              <option value="personal">💼 პირადი</option>
-              <option value="meetings">📅 შეხვედრები</option>
-              <option value="auto">🚗 ავტო</option>
-              <option value="app">📱 სრული აპლიკაცია</option>
-            </select>
-          </div>
-          <div class="fg">
-            <label>ტიპი</label>
-            <select id="fb_type">
-              <option value="idea">💡 იდეა</option>
-              <option value="bug">🐛 ხარვეზი</option>
-              <option value="question">❓ კითხვა</option>
-            </select>
-          </div>
-        </div>
-        <div class="fg">
-          <label>აღწერა</label>
-          <textarea id="fb_text" placeholder="კონკრეტული იდეა ან ხარვეზის აღწერა..." style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:14px;padding:10px 12px;font-family:inherit;outline:none;resize:vertical;min-height:90px;line-height:1.5" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
-        </div>
-        <button class="btn bp" style="margin-top:4px" onclick="saveFeedback()">+ დამატება</button>
-      </div>
-    </div>
-
-    <!-- LIST -->
-    <div class="sc">
-      <div class="sc-h">
-        <div class="sc-t">ჩანაწერები</div>
-        <div style="display:flex;gap:6px">
-          <select id="fb_filter_topic" onchange="renderFeedback()" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:11px;padding:4px 6px">
-            <option value="">ყველა</option>
-            <option value="personal">💼 პირადი</option>
-            <option value="meetings">📅 შეხვედრები</option>
-            <option value="auto">🚗 ავტო</option>
-            <option value="app">📱 სრული აპლიკაცია</option>
-          </select>
-          <select id="fb_filter_type" onchange="renderFeedback()" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:11px;padding:4px 6px">
-            <option value="">ყველა</option>
-            <option value="idea">💡 იდეა</option>
-            <option value="bug">🐛 ხარვეზი</option>
-            <option value="question">❓ კითხვა</option>
-          </select>
-        </div>
-      </div>
-      <div class="sc-b" id="fbList"></div>
-    </div>
-  </div>
-</div>
-
-<!-- QUICK PAY MODAL -->
-<div class="overlay" id="modalQuickPay">
-  <div class="modal">
-    <div class="mh"></div>
-    <div class="mt">💸 სწრაფი გადახდა</div>
-
-    <!-- Template shortcuts -->
-    <div style="margin-bottom:12px">
-      <label style="font-size:11px;color:var(--text2);font-weight:700;letter-spacing:.5px;display:block;margin-bottom:8px">სწრაფი შაბლონი</label>
-      <div style="display:flex;flex-wrap:wrap;gap:6px" id="qpTemplates">
-        <button class="qp-tpl" onclick="addQPItem('კვება 🍽')">🍽 კვება</button>
-        <button class="qp-tpl" onclick="addQPItem('სიგარეტი 🚬')">🚬 სიგარეტი</button>
-        <button class="qp-tpl" onclick="addQPItem('ყავა ☕')">☕ ყავა</button>
-        <button class="qp-tpl" onclick="addQPItem('ტაქსი 🚕')">🚕 ტაქსი</button>
-        <button class="qp-tpl" onclick="addQPItem('აფთიაქი 💊')">💊 აფთიაქი</button>
-        <button class="qp-tpl" onclick="addQPItem('სუპერმარკეტი 🛒')">🛒 სუპერმარ.</button>
-        <button class="qp-tpl" onclick="addQPItem('საწვავი ⛽')">⛽ საწვავი</button>
-        <button class="qp-tpl" onclick="addQPItem('სასმელი 🥤')">🥤 სასმელი</button>
-        <button class="qp-tpl" onclick="addQPItem('გართობა 🎮')">🎮 გართობა</button>
-        <button class="qp-tpl" onclick="addQPItem('ტანსაცმელი 👕')">👕 ტანსაცმელი</button>
-        <button class="qp-tpl" onclick="addQPItem('სილამაზე 💄')">💄 სილამაზე</button>
-        <button class="qp-tpl" onclick="addQPItem('სხვა ✏️')">✏️ სხვა</button>
-      </div>
-    </div>
-
-    <!-- Items list -->
-    <div id="qpItems" style="margin-bottom:10px"></div>
-
-    <!-- Add custom -->
-    <button class="btn bg" style="margin-bottom:12px" onclick="addQPItem('')">+ დამატება</button>
-
-    <!-- Date -->
-    <div class="fg" style="margin-bottom:12px">
-      <label>თარიღი</label>
-      <input type="date" id="qp_date">
-    </div>
-
-    <!-- Total -->
-    <div style="background:var(--bg3);border-radius:var(--rs);padding:12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:13px;font-weight:700;color:var(--text2)">💰 ჯამი</span>
-      <span style="font-size:20px;font-weight:700;color:var(--red)" id="qpTotal">0.00 ₾</span>
-    </div>
-
-    <div style="display:flex;gap:8px">
-      <button class="btn bs" onclick="closeM('modalQuickPay')">გაუქმება</button>
-      <button class="btn bp" onclick="saveQuickPay()">✓ გადახდა და შესყიდვებში</button>
-    </div>
-  </div>
-</div>
-
-<!-- CHANGELOG MODAL -->
-<div class="overlay" id="modalChangelog">
-  <div class="modal">
-    <div class="mh"></div>
-    <div class="mt">📋 ვერსიების ისტორია</div>
-
-    <div style="background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.25);border-radius:var(--r);padding:14px;margin-bottom:12px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:15px;font-weight:700;color:var(--accent)">V_1.4 — მიმდინარე</div>
-        <span class="badge b-green">ახალი</span>
-      </div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.8">
-        ✅ 3 ენა — 🇬🇪 ქართული, 🇬🇧 English, 🇷🇺 Русский<br>
-        ✅ Firebase Auth — რეგისტრაცია, შესვლა, პაროლის აღდგენა<br>
-        ✅ Firestore Cloud — მონაცემები ნებისმიერი მოწყობილობიდან<br>
-        ✅ GitHub Pages — PWA (Home Screen-ზე დამატება)<br>
-        ✅ შეხვედრების კალენდარი — დაგეგმილი დღეები მონიშნულია<br>
-        ✅ კალენდარის დღეზე დაჭერა — იმ დღის შეხვედრები<br>
-        ✅ ვადაგასული შეხვედრები — შედგა/გადაიდო popup<br>
-        ✅ ავტოს ჯანმრთელობა — მხოლოდ უახლესი სერვისი ითვლება<br>
-        ✅ 100%-ისთვის საჭირო სერვისების სია<br>
-        ✅ სერვისის შეცვლისას ძველი ავტომატურად არქივში<br>
-        ✅ სესხები და ფიქსირებული ხარჯები — "თვის" tab-ში<br>
-        ✅ გადახდის სტატუსი — "გადახდილი/გადახდა" ღილაკი<br>
-        ✅ სწრაფი გადახდა — მთავარ გვერდზე<br>
-        🐛 მონაცემების შენახვის პრობლემა გამოსწორდა<br>
-        🐛 თვის მაჩვენებელი ყოველთვის ჩანს<br>
-        🐛 Firestore Rules — ვადაგასული წესები შეიცვალა
-      </div>
-    </div>
-
-    <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:12px">
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">V_1.3</div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.8">
-        ✅ ავტოს მოდული — სერვისები, საწვავი, ისტორია<br>
-        ✅ შეხვედრების მოდული — პირადი, ჯგუფური, ქეიფი<br>
-        ✅ სწრაფი გადახდა — 12 შაბლონი<br>
-        ✅ ექსპორტი / იმპორტი<br>
-        🐛 ნავიგაციის გამოსწორება
-      </div>
-    </div>
-
-    <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:12px">
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">V_1.2</div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.8">
-        ✅ ავტოს მოდული (საწყისი ვერსია)<br>
-        ✅ შეცდომა/იდეა შიტი<br>
-        ✅ ქვედა ნავიგაცია (4 შიტი)<br>
-        ✅ მანქანის ჯანმრთელობის ქულა<br>
-        🐛 switchSheet ბაგის გამოსწორება
-      </div>
-    </div>
-
-    <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:12px">
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">V_1.1</div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.8">
-        ✅ შეხვედრების მოდული<br>
-        ✅ პაროლის სისტემა<br>
-        ✅ კომუნალურების თვიური შეყვანა<br>
-        ✅ დასადასტურებელი ოპერაციები<br>
-        ✅ შესყიდვების მოდული
-      </div>
-    </div>
-
-    <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:16px">
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">V_1.0</div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.8">
-        ✅ ფინანსების მოდული (საწყისი)<br>
-        ✅ Setup სისტემა<br>
-        ✅ ბალანსი, შემოსავლები, გასავლები<br>
-        ✅ სესხები, კომუნალური, ფიქსირებული
-      </div>
-    </div>
-
-    <button class="btn bp" onclick="closeM('modalChangelog')">დახურვა</button>
-  </div>
-</div>
-
-<!-- REGISTRATION SCREEN -->
-<div class="screenc" id="scRegister" style="display:none">
-  <div class="pw-inner" style="max-width:380px">
-    <div class="pw-logo">👤</div>
-    <div class="pw-title" style="margin-bottom:4px">რეგისტრაცია</div>
-    <div style="font-size:12px;color:var(--text2);margin-bottom:20px">შექმენი ანგარიში</div>
-
-    <div style="width:100%;margin-bottom:10px">
-      <div class="r2" style="margin-bottom:10px">
-        <div class="fg">
-          <label>სახელი *</label>
-          <input type="text" id="reg_fname" placeholder="პაატა" style="font-size:15px;padding:11px 13px">
-        </div>
-        <div class="fg">
-          <label>გვარი *</label>
-          <input type="text" id="reg_lname" placeholder="მაგალითი" style="font-size:15px;padding:11px 13px">
-        </div>
-      </div>
-      <div class="fg" style="margin-bottom:10px">
-        <label>დაბადების თარიღი *</label>
-        <input type="date" id="reg_bdate" style="font-size:15px;padding:11px 13px">
-      </div>
-      <div class="fg" style="margin-bottom:10px">
-        <label>ელ-ფოსტა *</label>
-        <input type="email" id="reg_email" placeholder="example@gmail.com" style="font-size:15px;padding:11px 13px">
-      </div>
-      <div class="fg" style="margin-bottom:10px">
-        <label>მობილური *</label>
-        <input type="tel" id="reg_phone" placeholder="+995 5XX XXX XXX" style="font-size:15px;padding:11px 13px">
-      </div>
-      <div class="fg" style="margin-bottom:10px">
-        <label>პაროლი * (მინ. 4 სიმბ.)</label>
-        <div class="pw-wrap" style="margin-bottom:0">
-          <input class="pw-inp" type="password" id="reg_pw" placeholder="••••••••" style="font-size:15px">
-          <button class="pw-eye" onclick="toggleRegEye()">👁</button>
-        </div>
-      </div>
-      <div class="fg" style="margin-bottom:16px">
-        <label>პაროლის გამეორება *</label>
-        <input type="password" id="reg_pw2" placeholder="••••••••" style="width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-size:15px;padding:13px 16px;font-family:inherit;outline:none">
-      </div>
-      <div id="reg_err" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none"></div>
-      <button class="pw-btn" onclick="submitRegister()">✓ რეგისტრაცია</button>
-    </div>
-    <button class="auth-link" style="margin-top:12px" onclick="showLogin()">← უკან შესვლაზე</button>
-  </div>
-</div>
-
-<!-- FORGOT PASSWORD SCREEN -->
-<div class="screenc" id="scForgot" style="display:none">
-  <div class="pw-inner">
-    <div class="pw-logo">🔑</div>
-    <div class="pw-title" style="margin-bottom:4px">პაროლის შეცვლა</div>
-    <div style="font-size:12px;color:var(--text2);margin-bottom:20px">შეიყვანე სარეგისტრაციო ინფო</div>
-    <div style="width:100%">
-      <div class="fg" style="margin-bottom:16px">
-        <label>ელ-ფოსტა</label>
-        <input type="email" id="forgot_contact" placeholder="example@gmail.com" style="font-size:15px;padding:11px 13px;width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:inherit;outline:none">
-      </div>
-      <div id="forgot_err" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none"></div>
-      <p style="font-size:12px;color:var(--text2);margin-bottom:14px">პაროლის აღდგენის ბმული გაიგზავნება შენს ელ-ფოსტაზე</p>
-      <button class="pw-btn" onclick="submitForgot()">📧 ბმულის გაგზავნა</button>
-    </div>
-    <button class="auth-link" style="margin-top:12px" onclick="showLogin()">← უკან შესვლაზე</button>
-  </div>
-</div>
-
-
-
-<!-- ADD LOAN MODAL -->
-<div class="overlay" id="mAddLoan">
-  <div class="modal">
-    <div class="mh"></div>
-    <div class="mt">🏦 სესხის დამატება</div>
-    <div class="fg"><label>სახელი</label><input type="text" id="loan_n" placeholder="სახლის სესხი, მანქანის სესხი..."></div>
-    <div class="r2">
-      <div class="fg"><label>თვიური გადასახადი</label><input type="number" id="loan_a" placeholder="0" min="0"></div>
-      <div class="fg"><label>ვალუტა</label><select id="loan_c"><option value="GEL">₾ ლარი</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option></select></div>
-    </div>
-    <div class="r2">
-      <div class="fg"><label>გადახდის რიცხვი</label><select id="loan_d"><option value="">—</option></select></div>
-      <div class="fg"><label>დასრულება (სურვ.)</label><input type="month" id="loan_e"></div>
-    </div>
-    <div class="fg"><label>დარჩენილი ვალი (სურვ.)</label><input type="number" id="loan_t" placeholder="0" min="0"></div>
-    <div style="display:flex;gap:8px;margin-top:4px">
-      <button class="btn bs" onclick="closeM('mAddLoan')">გაუქმება</button>
-      <button class="btn bp" onclick="saveLoanModal()">✓ დამატება</button>
-    </div>
-  </div>
-</div>
-
-<!-- ADD FIXED EXPENSE MODAL -->
-<div class="overlay" id="mAddFixed">
-  <div class="modal">
-    <div class="mh"></div>
-    <div class="mt">📌 ფიქსირებული ხარჯის დამატება</div>
-    <div class="fg"><label>სახელი</label><input type="text" id="fixed_n" placeholder="ინტერნეტი, სადაზღვევო..."></div>
-    <div class="r3">
-      <div class="fg"><label>თანხა</label><input type="number" id="fixed_a" placeholder="0" min="0"></div>
-      <div class="fg"><label>ვალუტა</label><select id="fixed_c"><option value="GEL">₾ ლარი</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option></select></div>
-      <div class="fg"><label>გადახდის რიცხვი</label><select id="fixed_d"><option value="">—</option></select></div>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:4px">
-      <button class="btn bs" onclick="closeM('mAddFixed')">გაუქმება</button>
-      <button class="btn bp" onclick="saveFixedModal()">✓ დამატება</button>
-    </div>
-  </div>
-</div>
-</body>
 </html>
