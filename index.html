@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0f1117">
+<meta name="theme-color" content="#1a2332">
 <title>პირადი მენეჯერი</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{--bg:#0f1117;--bg2:#181c27;--bg3:#1e2333;--card:#232840;--border:#2e3552;--text:#e8eaf6;--text2:#8892b0;--text3:#4a5580;--accent:#4f8ef7;--accent2:#3d7af5;--green:#2ecc88;--red:#e05555;--amber:#f0a830;--purple:#9b6dff;--r:14px;--rs:8px}
-body{font-family:'Sylfaen',Georgia,serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto;overflow-x:hidden}
+:root{--bg:#1a2332;--bg2:#1f2d40;--bg3:#243447;--card:#2d4159;--border:#2d4159;--text:#f1f5f9;--text2:#94a3b8;--text3:#64748b;--accent:#10b981;--accent2:#059669;--green:#10b981;--red:#f87171;--amber:#fbbf24;--purple:#a78bfa;--r:14px;--rs:8px}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto;overflow-x:hidden}
 .screen{display:none;min-height:100vh}.screen.active{display:block}
 .screenc{display:none;min-height:100vh;align-items:center;justify-content:center;flex-direction:column}.screenc.active{display:flex}
 .pw-inner{display:flex;flex-direction:column;align-items:center;padding:40px 24px;width:100%;max-width:360px}
@@ -66,7 +66,7 @@ select option{background:var(--bg3)}
 .tab{flex:1;min-width:56px;padding:11px 3px;text-align:center;font-size:11px;font-weight:700;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;white-space:nowrap}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .tb{display:none;padding:14px}.tb.active{display:block}
-.bal{background:linear-gradient(135deg,rgba(79,142,247,.15),rgba(155,109,255,.1));border:1px solid rgba(79,142,247,.3);border-radius:var(--r);padding:20px;margin-bottom:14px}
+.bal{background:linear-gradient(135deg,#059669,#10b981);border-radius:var(--r);padding:20px;margin-bottom:14px}
 .bal-lbl{font-size:11px;color:var(--text2);font-weight:700;letter-spacing:.5px;margin-bottom:4px}
 .bal-num{font-size:30px;font-weight:700;margin-bottom:14px}
 .bal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -139,6 +139,10 @@ select option{background:var(--bg3)}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .empty{text-align:center;padding:28px 20px;color:var(--text2)}.empty-i{font-size:32px;margin-bottom:8px}.empty p{font-size:13px}
 .div{height:1px;background:var(--border);margin:12px 0}
+.profile-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;border:2px solid rgba(16,185,129,.3);cursor:pointer;overflow:hidden;flex-shrink:0}
+.profile-avatar img{width:100%;height:100%;object-fit:cover}
+.car-photo{width:100%;height:100px;border-radius:var(--rs);object-fit:cover;margin-bottom:8px}
+.car-photo-placeholder{width:100%;height:80px;background:var(--bg3);border:1px dashed var(--border);border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text3);cursor:pointer;margin-bottom:8px}
 .auth-link{background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;padding:4px}
 .auth-link:hover{text-decoration:underline}
 .qp-tpl{background:var(--bg3);border:1px solid var(--border);border-radius:20px;color:var(--text);font-size:12px;font-weight:700;padding:5px 10px;cursor:pointer;font-family:inherit;transition:all .15s}
@@ -264,7 +268,7 @@ select option{background:var(--bg3)}
   <div class="pw-inner">
     <div class="pw-logo">🔐</div>
     <div class="pw-title">Personal Manager</div>
-    <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:16px">V_1.3</div>
+    <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:16px">V_1.5</div>
     <div class="pw-sub" id="pwSub">შედი შენს ანგარიშში</div>
     <div class="pw-wrap" style="margin-bottom:10px">
       <input class="pw-inp" type="email" id="pwEmail" placeholder="ელ-ფოსტა" style="letter-spacing:normal">
@@ -326,8 +330,9 @@ select option{background:var(--bg3)}
   <div class="app-hd">
     <div>
       <div class="app-t">📊 მენეჯერი</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.3</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.5</button>
     </div>
+    <div class="profile-avatar" id="headerAvatar" onclick="showTab('settings')" title="პროფილი" style="flex-shrink:0"></div>
     <div class="mnav">
       <button onclick="changeMonth(-1)">‹</button>
       <div class="mlbl" id="mlbl"></div>
@@ -387,7 +392,15 @@ select option{background:var(--bg3)}
     </div>
     <div class="ss"><div class="sst">ანგარიში</div>
       <div class="sr" style="cursor:default">
-        <div><div class="srl" id="userNameDisplay">—</div><div style="font-size:11px;color:var(--text2)" id="userEmailDisplay">—</div></div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="profile-avatar" id="settingsAvatar" onclick="triggerProfilePhoto()" style="width:48px;height:48px;font-size:18px" title="ფოტოს შეცვლა">👤</div>
+          <div>
+            <div class="srl" id="userNameDisplay">—</div>
+            <div style="font-size:11px;color:var(--text2)" id="userEmailDisplay">—</div>
+            <div style="font-size:10px;color:var(--accent);margin-top:2px;cursor:pointer" onclick="triggerProfilePhoto()">📷 ფოტოს შეცვლა</div>
+          </div>
+        </div>
+        <input type="file" id="profilePhotoInput" accept="image/*" style="display:none" onchange="handleProfilePhoto(this)">
       </div>
       <div class="sr" onclick="changePw()"><div class="srl">🔐 პაროლის შეცვლა</div><div class="srv">→</div></div>
       <div class="sr" onclick="fbLogout()"><div class="srl" style="color:var(--red)">🚪 გამოსვლა</div><div class="srv" style="color:var(--red)">→</div></div>
@@ -778,6 +791,8 @@ function enterApp(){
 
   // check expired meetings
   setTimeout(checkExpiredMeetings, 1500);
+  // update avatars
+  setTimeout(updateAllAvatars, 100);
   // welcome
   setTimeout(showWelcome,500);
 
@@ -2295,6 +2310,15 @@ function renderCarDetail(){
 
 function renderDashboard(car){
   const el=document.getElementById('ctab-dashboard');
+  // update car photo section
+  const photoDiv=document.getElementById('carPhotoDisplay');
+  if(photoDiv){
+    if(car.photo){
+      photoDiv.innerHTML=`<div style='position:relative'><img src='${car.photo}' style='width:100%;height:140px;object-fit:cover;border-radius:var(--r)'><button onclick='triggerCarPhoto("${car.id}")' style='position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);border:none;border-radius:var(--rs);color:#fff;font-size:11px;padding:5px 10px;cursor:pointer'>📷 შეცვლა</button></div>`;
+    } else {
+      photoDiv.innerHTML=`<div onclick='triggerCarPhoto("${car.id}")' style='width:100%;height:90px;background:var(--bg3);border:1px dashed var(--border);border-radius:var(--r);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer'><span style='font-size:24px'>📷</span><span style='font-size:12px;color:var(--text3)'>მანქანის ფოტო დაამატე</span></div>`;
+    }
+  }
   const health=getCarHealth(car.id);
   const healthColor=health>=80?'var(--green)':health>=50?'var(--amber)':'var(--red)';
   const svcs=getCarServices(car.id);
@@ -2309,6 +2333,10 @@ function renderDashboard(car){
   const needFix=getActiveServices(car.id).filter(s=>getSvcStatus(s,car.mileage).status==='due'||getSvcStatus(s,car.mileage).status==='warn');
 
   let html=`
+  <!-- Car Photo -->
+  <div id="carPhotoSection" style="margin-bottom:12px;position:relative">
+    <div id="carPhotoDisplay"></div>
+  </div>
   <!-- Health Score -->
   <div class="bal" style="margin-bottom:12px">
     <div class="bal-lbl">❤️ მანქანის ჯანმრთელობა</div>
@@ -3088,6 +3116,63 @@ function closeDayMeetings(){
   const ov=document.getElementById('dayMeetingsOv');
   if(ov) ov.classList.remove('active');
 }
+
+// ══════════════════════════════════════════
+// PROFILE PHOTO & CAR PHOTO
+// ══════════════════════════════════════════
+function triggerProfilePhoto(){
+  document.getElementById('profilePhotoInput').click();
+}
+
+function handleProfilePhoto(input){
+  const file=input.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const dataUrl=e.target.result;
+    db.profilePhoto=dataUrl;
+    save();
+    updateAllAvatars();
+    showToast('✅ ფოტო განახლდა');
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateAllAvatars(){
+  const photo=db.profilePhoto;
+  const initials=db.user?(db.user.fname||'?')[0].toUpperCase():'?';
+  const avatarIds=['headerAvatar','hdrAv_meet','hdrAv_auto','hdrAv_idea','settingsAvatar'];
+  avatarIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    if(photo){
+      el.innerHTML='<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+    } else {
+      el.textContent=initials;
+    }
+  });
+}
+
+function triggerCarPhoto(carId){
+  const inp=document.getElementById('carPhotoInput');
+  if(inp){ inp.dataset.carId=carId; inp.click(); }
+}
+
+function handleCarPhoto(input){
+  const file=input.files[0];
+  if(!file) return;
+  const carId=input.dataset.carId;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const dataUrl=e.target.result;
+    db.cars=db.cars.map(c=>c.id===carId?Object.assign({},c,{photo:dataUrl}):c);
+    save();
+    renderCarDetail();
+    showToast('✅ მანქანის ფოტო დამატებულია');
+  };
+  reader.readAsDataURL(file);
+}
+
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 </script>
 
@@ -3116,8 +3201,9 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">📅 შეხვედრები</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.3</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.5</button>
     </div>
+    <div class="profile-avatar" id="hdrAv_meet" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" style="flex-shrink:0"></div>
     <button class="btn bok" style="padding:7px 14px;font-size:13px" onclick="openM('mAddMeet')">+ დამატება</button>
   </div>
   <div class="tabs">
@@ -3135,8 +3221,9 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">🚗 ავტო</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.3</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.5</button>
     </div>
+    <div class="profile-avatar" id="hdrAv_auto" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" style="flex-shrink:0"></div>
     <button class="btn bok" style="padding:7px 14px;font-size:13px" onclick="openAddCarModal()">+ მანქანა</button>
   </div>
   <div class="tabs" id="autoTabs" style="display:none">
@@ -3390,8 +3477,9 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">💡 შეცდომა / იდეა</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.3</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.5</button>
     </div>
+    <div class="profile-avatar" id="hdrAv_idea" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" style="flex-shrink:0"></div>
     <button onclick="openM('modalChangelog')" style="background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);color:var(--accent);border-radius:20px;font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer;font-family:inherit">📋 ვერსიები</button>
   </div>
   <div style="padding:14px">
@@ -3509,7 +3597,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
 
     <div style="background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.25);border-radius:var(--r);padding:14px;margin-bottom:12px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:15px;font-weight:700;color:var(--accent)">V_1.3 — მიმდინარე</div>
+        <div style="font-size:15px;font-weight:700;color:var(--accent)">V_1.5 — მიმდინარე</div>
         <span class="badge b-green">ახალი</span>
       </div>
       <div style="font-size:12px;color:var(--text2);line-height:1.8">
@@ -3668,5 +3756,6 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
     </div>
   </div>
 </div>
+<input type="file" id="carPhotoInput" accept="image/*" style="display:none" onchange="handleCarPhoto(this)">
 </body>
 </html>
