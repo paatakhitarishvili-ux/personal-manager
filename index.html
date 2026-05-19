@@ -270,7 +270,7 @@ select option{background:var(--bg3)}
   <div class="pw-inner">
     <div class="pw-logo">🔐</div>
     <div class="pw-title">Personal Manager</div>
-    <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:16px">V_1.5</div>
+    <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:16px">V_1.6</div>
     <div class="pw-sub" id="pwSub">შედი შენს ანგარიშში</div>
     <div class="pw-wrap" style="margin-bottom:10px">
       <input class="pw-inp" type="email" id="pwEmail" placeholder="ელ-ფოსტა" style="letter-spacing:normal">
@@ -332,7 +332,7 @@ select option{background:var(--bg3)}
   <div class="app-hd">
     <div>
       <div class="app-t">📊 მენეჯერი</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.5</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.6</button>
     </div>
     <div class="profile-avatar" id="headerAvatar" onclick="showTab('settings')" title="პროფილი" style="flex-shrink:0"></div>
     <div class="mnav">
@@ -555,6 +555,7 @@ function ensureDbFields(){
   if(!db.carFuels) db.carFuels=[];
   if(!db.meetings) db.meetings=[];
   if(!db.feedback) db.feedback=[];
+  if(!db.obligations) db.obligations=[];
 }
 
 function load(){
@@ -1458,11 +1459,11 @@ function doDelete(){if(delCb)delCb();delCb=null;closeCov('cDel');}
 // ══════════════════════════════════════════
 function switchSheet(name){
   document.getElementById('scApp').style.display='none';
-  ['sheetMeetings','sheetAuto','sheetFeedback','sheetCarDetail'].forEach(function(id){
+  ['sheetMeetings','sheetAuto','sheetFeedback','sheetCarDetail','sheetObligations'].forEach(function(id){
     var e=document.getElementById(id);if(e)e.classList.remove('active');
   });
   ['scRegister','scForgot'].forEach(function(id){var e=document.getElementById(id);if(e){e.classList.remove('active');e.style.display='none';}});
-  ['P','M','A','F'].forEach(function(x){document.getElementById('bnav'+x).classList.remove('active');});
+  ['P','M','A','F','Obl'].forEach(function(x){document.getElementById('bnav'+x).classList.remove('active');});
 
   if(name==='personal'){
     document.getElementById('scApp').style.display='block';
@@ -2893,6 +2894,9 @@ function scheduleLocalNotifications(){
     }
   });
 
+  // Check obligations
+  checkOblNotifications();
+
   // Show local notifications
   upcoming.forEach((n, i) => {
     setTimeout(()=>{
@@ -3188,6 +3192,251 @@ function handleCarPhoto(input){
   reader.readAsDataURL(file);
 }
 
+
+// ══════════════════════════════════════════
+// OBLIGATIONS MODULE V_1.6
+// ══════════════════════════════════════════
+let currentOblTab = 'dashboard';
+
+function showOblTab(name){
+  const tabs = ['dashboard','incoming','outgoing','archive'];
+  document.querySelectorAll('#sheetObligations .tab').forEach((t,i)=>t.classList.toggle('active', tabs[i]===name));
+  document.querySelectorAll('#sheetObligations .tb').forEach(b=>b.classList.remove('active'));
+  const tabEl = document.getElementById('oblTab'+name.charAt(0).toUpperCase()+name.slice(1));
+  if(tabEl) tabEl.classList.add('active');
+  currentOblTab = name;
+  renderObligations();
+}
+
+function renderObligations(){
+  renderOblDashboard();
+  renderOblList('incoming');
+  renderOblList('outgoing');
+  renderOblArchive();
+}
+
+function getObligations(){ return db.obligations || []; }
+
+function oblStatus(obl){
+  if(obl.done) return 'done';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const due = new Date(obl.dateDue); due.setHours(0,0,0,0);
+  return due < today ? 'overdue' : 'active';
+}
+
+function renderOblDashboard(){
+  const el = document.getElementById('oblDashContent');
+  if(!el) return;
+  const obls = getObligations();
+  const active = obls.filter(o=>!o.done);
+  const archived = obls.filter(o=>o.done);
+
+  const sumIn = active.filter(o=>o.type==='incoming').reduce((s,o)=>s+toGEL(o.amount,o.currency),0);
+  const sumOut = active.filter(o=>o.type==='outgoing').reduce((s,o)=>s+toGEL(o.amount,o.currency),0);
+  const overdueIn = active.filter(o=>o.type==='incoming'&&oblStatus(o)==='overdue').reduce((s,o)=>s+toGEL(o.amount,o.currency),0);
+  const overdueOut = active.filter(o=>o.type==='outgoing'&&oblStatus(o)==='overdue').reduce((s,o)=>s+toGEL(o.amount,o.currency),0);
+  const archIn = archived.filter(o=>o.type==='incoming').reduce((s,o)=>s+toGEL(o.amount,o.currency),0);
+  const archOut = archived.filter(o=>o.type==='outgoing').reduce((s,o)=>s+toGEL(o.amount,o.currency),0);
+
+  el.innerHTML = `
+    <div style="margin-bottom:8px;font-size:11px;color:var(--text3);font-weight:700;letter-spacing:.5px;text-transform:uppercase">აქტიური ვალდებულებები</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:var(--r);padding:14px">
+        <div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:6px">📥 მისაღები</div>
+        <div style="font-size:22px;font-weight:700;color:var(--green)">${fG(sumIn)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${active.filter(o=>o.type==='incoming').length} ჩანაწერი</div>
+      </div>
+      <div style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:var(--r);padding:14px">
+        <div style="font-size:11px;color:var(--red);font-weight:700;margin-bottom:6px">📤 გასაცემი</div>
+        <div style="font-size:22px;font-weight:700;color:var(--red)">${fG(sumOut)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${active.filter(o=>o.type==='outgoing').length} ჩანაწერი</div>
+      </div>
+    </div>
+
+    ${(overdueIn>0||overdueOut>0)?`
+    <div style="margin-bottom:8px;font-size:11px;color:var(--text3);font-weight:700;letter-spacing:.5px;text-transform:uppercase">⚠️ ვადაგადაცილებული</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:var(--r);padding:12px">
+        <div style="font-size:10px;color:var(--green);font-weight:700;margin-bottom:4px">📥 მისაღები</div>
+        <div style="font-size:18px;font-weight:700;color:var(--green)">${fG(overdueIn)}</div>
+      </div>
+      <div style="background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.2);border-radius:var(--r);padding:12px">
+        <div style="font-size:10px;color:var(--red);font-weight:700;margin-bottom:4px">📤 გასაცემი</div>
+        <div style="font-size:18px;font-weight:700;color:var(--red)">${fG(overdueOut)}</div>
+      </div>
+    </div>`:''}
+
+    <div style="margin-bottom:8px;font-size:11px;color:var(--text3);font-weight:700;letter-spacing:.5px;text-transform:uppercase">📋 არქივი (შესრულებული)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px">
+        <div style="font-size:10px;color:var(--text2);font-weight:700;margin-bottom:4px">📥 მისაღები</div>
+        <div style="font-size:18px;font-weight:700;color:var(--text)">${fG(archIn)}</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px">
+        <div style="font-size:10px;color:var(--text2);font-weight:700;margin-bottom:4px">📤 გასაცემი</div>
+        <div style="font-size:18px;font-weight:700;color:var(--text)">${fG(archOut)}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderOblList(type){
+  const elId = type==='incoming' ? 'oblIncomingList' : 'oblOutgoingList';
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const items = getObligations().filter(o=>o.type===type&&!o.done);
+  const today = new Date(); today.setHours(0,0,0,0);
+  if(!items.length){
+    el.innerHTML = '<div class="empty"><p>ვალდებულება არ არის</p></div>';
+    return;
+  }
+  items.sort((a,b)=>new Date(a.dateDue)-new Date(b.dateDue));
+  el.innerHTML = items.map(o=>{
+    const status = oblStatus(o);
+    const isOverdue = status==='overdue';
+    const due = new Date(o.dateDue);
+    const diffDays = Math.ceil((due-today)/(1000*60*60*24));
+    const dueLabel = isOverdue
+      ? `🔴 ${Math.abs(diffDays)} დღით გადაცილებული`
+      : diffDays===0 ? '🟡 დღეს!'
+      : diffDays===1 ? '🟡 ხვალ!'
+      : `🟢 ${diffDays} დღე დარჩა`;
+    const borderColor = isOverdue ? 'var(--red)' : 'var(--green)';
+    return `<div style="background:var(--bg3);border:1px solid var(--border);border-left:3px solid ${borderColor};border-radius:var(--r);padding:14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--text)">${o.fname} ${o.lname}${o.nick?' ('+o.nick+')':''}</div>
+          ${o.note?`<div style="font-size:11px;color:var(--text3);margin-top:2px">📝 ${o.note}</div>`:''}
+        </div>
+        <div style="font-size:18px;font-weight:700;color:${isOverdue?'var(--red)':'var(--green)'}">${fA(o.amount,o.currency)}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:11px;color:var(--text3)">გაცემა: ${o.dateGiven||'—'}</div>
+          <div style="font-size:11px;margin-top:2px">${dueLabel}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button onclick="completeObl('${o.id}')" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:var(--green);border-radius:var(--rs);font-size:12px;padding:6px 12px;cursor:pointer;font-family:inherit">✓ შესრულდა</button>
+          <button onclick="deleteObl('${o.id}')" style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);color:var(--red);border-radius:var(--rs);font-size:12px;padding:6px 10px;cursor:pointer;font-family:inherit">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderOblArchive(){
+  const el = document.getElementById('oblArchiveList');
+  if(!el) return;
+  const filterType = document.getElementById('oblArchFilter')?.value || 'all';
+  const dateFrom = document.getElementById('oblArchDateFrom')?.value;
+  const dateTo = document.getElementById('oblArchDateTo')?.value;
+
+  let items = getObligations().filter(o=>o.done);
+  if(filterType!=='all') items = items.filter(o=>o.type===filterType);
+  if(dateFrom) items = items.filter(o=>o.doneAt>=dateFrom);
+  if(dateTo) items = items.filter(o=>o.doneAt<=dateTo);
+  items.sort((a,b)=>new Date(b.doneAt)-new Date(a.doneAt));
+
+  if(!items.length){
+    el.innerHTML = '<div class="empty"><p>არქივი ცარიელია</p></div>';
+    return;
+  }
+  el.innerHTML = items.map(o=>{
+    const typeLabel = o.type==='incoming' ? '📥 მისაღები' : '📤 გასაცემი';
+    const typeColor = o.type==='incoming' ? 'var(--green)' : 'var(--red)';
+    return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:8px;opacity:.85">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:13px;font-weight:700;color:var(--text)">${o.fname} ${o.lname}${o.nick?' ('+o.nick+')':''}</div>
+        <div style="font-size:16px;font-weight:700;color:${typeColor}">${fA(o.amount,o.currency)}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="font-size:11px;color:${typeColor}">${typeLabel}</span>
+        <span style="font-size:11px;color:var(--text3)">✅ შესრულდა: ${o.doneAt||'—'}</span>
+      </div>
+      ${o.note?`<div style="font-size:11px;color:var(--text3);margin-top:4px">📝 ${o.note}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openAddObl(type){
+  document.getElementById('obl_type').value = type;
+  document.getElementById('oblModalTitle').textContent = type==='incoming' ? '📥 მისაღები ვალდებულება' : '📤 გასაცემი ვალდებულება';
+  ['obl_fname','obl_lname','obl_nick','obl_amount','obl_note'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('obl_currency').value='GEL';
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('obl_date_given').value = today;
+  document.getElementById('obl_date_due').value = '';
+  openM('modalAddObl');
+}
+
+function saveObl(){
+  const fname = document.getElementById('obl_fname').value.trim();
+  const lname = document.getElementById('obl_lname').value.trim();
+  const amount = parseFloat(document.getElementById('obl_amount').value)||0;
+  const dateDue = document.getElementById('obl_date_due').value;
+  if(!fname){showToast('⚠️ შეიყვანე სახელი');return;}
+  if(!amount){showToast('⚠️ შეიყვანე თანხა');return;}
+  if(!dateDue){showToast('⚠️ შეიყვანე მისაღები თარიღი');return;}
+  if(!db.obligations) db.obligations=[];
+  db.obligations.push({
+    id:'obl_'+Date.now(),
+    type: document.getElementById('obl_type').value,
+    fname, lname,
+    nick: document.getElementById('obl_nick').value.trim(),
+    amount,
+    currency: document.getElementById('obl_currency').value,
+    dateGiven: document.getElementById('obl_date_given').value,
+    dateDue,
+    note: document.getElementById('obl_note').value.trim(),
+    done: false,
+    createdAt: new Date().toISOString().split('T')[0]
+  });
+  save();
+  closeM('modalAddObl');
+  renderObligations();
+  showToast('✅ ვალდებულება დამატებულია');
+}
+
+function completeObl(id){
+  showDel(()=>{
+    db.obligations = db.obligations.map(o=>{
+      if(o.id===id) return Object.assign({},o,{done:true, doneAt:new Date().toISOString().split('T')[0]});
+      return o;
+    });
+    save();
+    renderObligations();
+    showToast('✅ ვალდებულება შესრულებულია!');
+  });
+  document.getElementById('cDelT').textContent = '✅ შესრულება';
+  document.getElementById('cDelP').textContent = 'ვალდებულება გადაიტანება არქივში?';
+}
+
+function deleteObl(id){
+  showDel(()=>{
+    db.obligations = db.obligations.filter(o=>o.id!==id);
+    save();
+    renderObligations();
+    showToast('🗑 ვალდებულება წაიშალა');
+  });
+}
+
+// Check obligations notifications (1 day before due)
+function checkOblNotifications(){
+  if(Notification.permission!=='granted') return;
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate()+1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+  (db.obligations||[]).filter(o=>!o.done&&o.dateDue===tomorrowStr).forEach(o=>{
+    const typeLabel = o.type==='incoming'?'მისაღები':'გასაცემი';
+    new Notification('🤝 ვალდებულების შეხსენება', {
+      body: `${typeLabel}: ${o.fname} ${o.lname} — ${fA(o.amount,o.currency)} — ხვალ ვადა!`,
+      icon: '/personal-manager/icon-192.png'
+    });
+  });
+}
+
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 </script>
 
@@ -3209,6 +3458,10 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
     <div class="bnav-ico">💡</div>
     <div class="bnav-lbl">იდეა</div>
   </button>
+  <button class="bnav-btn" id="bnavObl" onclick="switchSheet('obligations')">
+    <div class="bnav-ico">🤝</div>
+    <div class="bnav-lbl">ვალდებ.</div>
+  </button>
 </div>
 
 <!-- MEETINGS SHEET -->
@@ -3216,7 +3469,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">📅 შეხვედრები</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.5</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.6</button>
     </div>
     <div class="profile-avatar" id="hdrAv_meet" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" style="flex-shrink:0"></div>
     <button class="btn bok" style="padding:7px 14px;font-size:13px" onclick="openM('mAddMeet')">+ დამატება</button>
@@ -3236,7 +3489,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">🚗 ავტო</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.5</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.6</button>
     </div>
     <div class="profile-avatar" id="hdrAv_auto" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" style="flex-shrink:0"></div>
     <button class="btn bok" style="padding:7px 14px;font-size:13px" onclick="openAddCarModal()">+ მანქანა</button>
@@ -3499,7 +3752,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">💡 შეცდომა / იდეა</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.5</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.6</button>
     </div>
     <div class="profile-avatar" id="hdrAv_idea" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" style="flex-shrink:0"></div>
     <button onclick="openM('modalChangelog')" style="background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);color:var(--accent);border-radius:20px;font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer;font-family:inherit">📋 ვერსიები</button>
@@ -3619,7 +3872,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
 
     <div style="background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.25);border-radius:var(--r);padding:14px;margin-bottom:12px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:15px;font-weight:700;color:var(--accent)">V_1.5 — მიმდინარე</div>
+        <div style="font-size:15px;font-weight:700;color:var(--accent)">V_1.6 — მიმდინარე</div>
         <span class="badge b-green">ახალი</span>
       </div>
       <div style="font-size:12px;color:var(--text2);line-height:1.8">
@@ -3779,5 +4032,88 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   </div>
 </div>
 <input type="file" id="carPhotoInput" accept="image/*" style="display:none" onchange="handleCarPhoto(this)">
+
+<!-- OBLIGATIONS SHEET -->
+<div class="sheet" id="sheetObligations">
+  <div class="app-hd">
+    <div>
+      <div class="app-t">🤝 ვალდებულებები</div>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.6</button>
+    </div>
+    <div class="profile-avatar" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" id="hdrAv_obl" style="flex-shrink:0"></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs" style="padding:0 16px;margin-bottom:0">
+    <button class="tab active" onclick="showOblTab('dashboard')">📊 დეშბ.</button>
+    <button class="tab" onclick="showOblTab('incoming')">📥 მისაღები</button>
+    <button class="tab" onclick="showOblTab('outgoing')">📤 გასაცემი</button>
+    <button class="tab" onclick="showOblTab('archive')">📋 არქივი</button>
+  </div>
+
+  <!-- DASHBOARD TAB -->
+  <div class="tb active" id="oblTabDashboard" style="padding:14px">
+    <div id="oblDashContent"></div>
+  </div>
+
+  <!-- INCOMING TAB -->
+  <div class="tb" id="oblTabIncoming" style="padding:14px">
+    <button class="btn bp" style="width:100%;margin-bottom:14px" onclick="openAddObl('incoming')">+ მისაღები ვალდებულების დამატება</button>
+    <div id="oblIncomingList"></div>
+  </div>
+
+  <!-- OUTGOING TAB -->
+  <div class="tb" id="oblTabOutgoing" style="padding:14px">
+    <button class="btn bp" style="width:100%;margin-bottom:14px" onclick="openAddObl('outgoing')">+ გასაცემი ვალდებულების დამატება</button>
+    <div id="oblOutgoingList"></div>
+  </div>
+
+  <!-- ARCHIVE TAB -->
+  <div class="tb" id="oblTabArchive" style="padding:14px">
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <select id="oblArchFilter" onchange="renderOblArchive()" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:13px;padding:8px 10px;font-family:inherit">
+        <option value="all">ყველა</option>
+        <option value="incoming">📥 მისაღები</option>
+        <option value="outgoing">📤 გასაცემი</option>
+      </select>
+      <input type="date" id="oblArchDateFrom" onchange="renderOblArchive()" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:13px;padding:8px 10px;font-family:inherit">
+      <input type="date" id="oblArchDateTo" onchange="renderOblArchive()" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:13px;padding:8px 10px;font-family:inherit">
+    </div>
+    <div id="oblArchiveList"></div>
+  </div>
+</div>
+
+<!-- ADD OBLIGATION MODAL -->
+<div class="overlay" id="modalAddObl">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt" id="oblModalTitle">ვალდებულების დამატება</div>
+    <input type="hidden" id="obl_type" value="incoming">
+    <div class="r2">
+      <div class="fg"><label>სახელი *</label><input type="text" id="obl_fname" placeholder="გიორგი"></div>
+      <div class="fg"><label>გვარი *</label><input type="text" id="obl_lname" placeholder="მაგალითი"></div>
+    </div>
+    <div class="fg"><label>მეტსახელი</label><input type="text" id="obl_nick" placeholder="სურვილისამებრ"></div>
+    <div class="r2">
+      <div class="fg"><label>თანხა *</label><input type="number" id="obl_amount" placeholder="0" min="0" step="0.01"></div>
+      <div class="fg"><label>ვალუტა</label>
+        <select id="obl_currency">
+          <option value="GEL">₾ ლარი</option>
+          <option value="USD">$ USD</option>
+          <option value="EUR">€ EUR</option>
+        </select>
+      </div>
+    </div>
+    <div class="r2">
+      <div class="fg"><label>გაცემის თარიღი *</label><input type="date" id="obl_date_given"></div>
+      <div class="fg"><label>მისაღები თარიღი *</label><input type="date" id="obl_date_due"></div>
+    </div>
+    <div class="fg"><label>შენიშვნა</label><input type="text" id="obl_note" placeholder="სხვა დეტალი..."></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn bs" onclick="closeM('modalAddObl')">გაუქმება</button>
+      <button class="btn bp" onclick="saveObl()">✓ შენახვა</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
