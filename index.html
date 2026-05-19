@@ -349,8 +349,7 @@ const LANGS = {
   }
 };
 
-let currentLang = 'ka';
-function tr(key){ return (LANGS[currentLang]||LANGS.ka)[key] || (LANGS.ka)[key] || key; }
+
 function setLang(lang){
   currentLang = lang;
   db.lang = lang;
@@ -421,6 +420,10 @@ function applyLang(){
   const qpBtns=document.querySelectorAll('button[onclick="openQuickPay()"] span');
   qpBtns.forEach(sp=>{if(sp.textContent&&sp.textContent.length>3)sp.textContent=tr('quick_pay');});
 }
+
+
+let currentLang = 'ka';
+function tr(key){ return (LANGS[currentLang]||LANGS.ka)[key] || (LANGS.ka)[key] || key; }
 
 </script>
 <!-- Firebase SDKs (compat version - works globally) -->
