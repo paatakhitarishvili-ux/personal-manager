@@ -270,7 +270,7 @@ select option{background:var(--bg3)}
   <div class="pw-inner">
     <div class="pw-logo">🔐</div>
     <div class="pw-title">Personal Manager</div>
-    <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:16px">V_1.7</div>
+    <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:16px">V_1.8</div>
     <div class="pw-sub" id="pwSub">შედი შენს ანგარიშში</div>
     <div class="pw-wrap" style="margin-bottom:10px">
       <input class="pw-inp" type="email" id="pwEmail" placeholder="ელ-ფოსტა" style="letter-spacing:normal">
@@ -332,7 +332,7 @@ select option{background:var(--bg3)}
   <div class="app-hd">
     <div>
       <div class="app-t">📊 მენეჯერი</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.7</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.8</button>
     </div>
     <div class="profile-avatar" id="headerAvatar" onclick="showTab('settings')" title="პროფილი" style="flex-shrink:0"></div>
     <div class="mnav">
@@ -1462,11 +1462,11 @@ function doDelete(){if(delCb)delCb();delCb=null;closeCov('cDel');}
 // ══════════════════════════════════════════
 function switchSheet(name){
   document.getElementById('scApp').style.display='none';
-  ['sheetMeetings','sheetAuto','sheetFeedback','sheetCarDetail','sheetObligations','sheetStatistics'].forEach(function(id){
+  ['sheetMeetings','sheetAuto','sheetFeedback','sheetCarDetail','sheetObligations','sheetStatistics','sheetFun'].forEach(function(id){
     var e=document.getElementById(id);if(e)e.classList.remove('active');
   });
   ['scRegister','scForgot'].forEach(function(id){var e=document.getElementById(id);if(e){e.classList.remove('active');e.style.display='none';}});
-  ['P','M','A','F','Obl','Stat'].forEach(function(x){document.getElementById('bnav'+x).classList.remove('active');});
+  ['P','M','A','F','Obl','Stat','Fun'].forEach(function(x){document.getElementById('bnav'+x).classList.remove('active');});
 
   if(name==='personal'){
     document.getElementById('scApp').style.display='block';
@@ -1492,6 +1492,11 @@ function switchSheet(name){
     document.getElementById('sheetStatistics').classList.add('active');
     document.getElementById('bnavStat').classList.add('active');
     renderStatistics();
+    updateAllAvatars();
+  } else if(name==='fun'){
+    document.getElementById('sheetFun').classList.add('active');
+    document.getElementById('bnavFun').classList.add('active');
+    initFunSheet();
     updateAllAvatars();
   }
 }
@@ -3207,7 +3212,7 @@ function handleCarPhoto(input){
 
 
 // ══════════════════════════════════════════
-// OBLIGATIONS MODULE V_1.7
+// OBLIGATIONS MODULE V_1.8
 // ══════════════════════════════════════════
 let currentOblTab = 'dashboard';
 
@@ -3455,7 +3460,7 @@ function checkOblNotifications(){
 // SESSION TIMEOUT - 5 minutes
 // ══════════════════════════════════════════
 let _sessionTimer = null;
-const SESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+const SESSION_TIMEOUT = 1 * 60 * 1000; // 1 minute
 
 function resetSessionTimer(){
   if(!window._fbUser) return;
@@ -3491,7 +3496,7 @@ document.addEventListener('click', resetSessionTimer);
 
 
 // ══════════════════════════════════════════
-// STATISTICS MODULE V_1.7
+// STATISTICS MODULE V_1.8
 // ══════════════════════════════════════════
 let statPeriod = 'month';
 
@@ -3764,6 +3769,315 @@ function toggleStatDetail(id){
   if(el) el.style.display = el.style.display==='none' ? 'block' : 'none';
 }
 
+
+// ══════════════════════════════════════════
+// FUN MODULE V_1.8
+// ══════════════════════════════════════════
+
+function showFunTab(name){
+  const tabs=['quiz','snake','memory','rps','reaction'];
+  document.querySelectorAll('#sheetFun .tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===name));
+  document.querySelectorAll('#sheetFun .tb').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById('funTab'+name.charAt(0).toUpperCase()+name.slice(1));
+  if(el) el.classList.add('active');
+  if(name==='snake') initSnakeCanvas();
+}
+
+function initFunSheet(){
+  initSnakeCanvas();
+}
+
+// ── QUIZ (რა სად როდის) ──
+const QUIZ_QUESTIONS = [
+  {q:'რომელ წელს გამოქვეყნდა შოთა რუსთაველის "ვეფხისტყაოსანი"?', a:'დაახლოებით XII საუკუნის ბოლოს (1207-1213 წლები)'},
+  {q:'რომელ ქვეყანაში მდებარეობს კილიმანჯარო მთა?', a:'ტანზანია'},
+  {q:'H2O — რა ქიმიური ნაერთია?', a:'წყალი'},
+  {q:'რომელი ოკეანეა ყველაზე დიდი?', a:'წყნარი ოკეანე'},
+  {q:'რომელ წელს დაიწყო მეორე მსოფლიო ომი?', a:'1939 წელი'},
+  {q:'მსოფლიოში ყველაზე მაღალი შენობა რომელია?', a:'ბურჯ ხალიფა (დუბაი)'},
+  {q:'რამდენი ქვეყანა შედის გაეროში?', a:'193 ქვეყანა'},
+  {q:'ვინ დახატა "მონა ლიზა"?', a:'ლეონარდო და ვინჩი'},
+  {q:'რომელი ელემენტი ატომური ნომრით 1-ია?', a:'წყალბადი (H)'},
+  {q:'სად გაიმართა 2024 წლის ოლიმპიური თამაშები?', a:'პარიზი, საფრანგეთი'},
+  {q:'რამდენი კილომეტრია ჩინეთის დიდი კედელი?', a:'დაახლოებით 21,196 კმ'},
+  {q:'ვინ არის "ჰამლეტის" ავტორი?', a:'უილიამ შექსპირი'},
+  {q:'რომელ კონტინენტზეა ეგვიპტე?', a:'აფრიკა'},
+  {q:'პითაგორეს თეორემა: a²+b²=?', a:'c²'},
+  {q:'რომელი ქვეყნის დედაქალაქია კანბერა?', a:'ავსტრალია'},
+  {q:'რამდენი ელემენტია პერიოდულ სისტემაში?', a:'118 ელემენტი'},
+  {q:'სინათლის სიჩქარე ვაკუუმში?', a:'299,792,458 მ/წმ (≈ 300,000 კმ/წმ)'},
+  {q:'ვინ გახდა პირველი კოსმოსში გასული ადამიანი?', a:'იური გაგარინი (1961)'},
+  {q:'რომელ წელს აღმოაჩინა ამერიკა კოლუმბმა?', a:'1492 წელი'},
+  {q:'DNA — რას ნიშნავს?', a:'დეზოქსირიბონუკლეინის მჟავა'},
+  {q:'მსოფლიოში ყველაზე დიდი ქვეყანა ფართობით?', a:'რუსეთი'},
+  {q:'რომელი ვირუსი გამოიწვია 2020 წლის პანდემია?', a:'SARS-CoV-2 (COVID-19)'},
+  {q:'ვინ დაწერა "ომი და მშვიდობა"?', a:'ლევ ტოლსტოი'},
+  {q:'რომელ ქვეყანაშია ჰიმალაი?', a:'ნეპალი, ინდოეთი, ჩინეთი, ბუტანი, პაკისტანი'},
+  {q:'კომპიუტერის CPU — რას ნიშნავს?', a:'Central Processing Unit — ცენტრალური პროცესორი'},
+  {q:'ვინ შექმნა თეორია ფარდობითობის?', a:'ალბერტ აინშტაინი'},
+  {q:'რომელია ყველაზე პატარა კონტინენტი?', a:'ავსტრალია'},
+  {q:'ათვლა ითვლება რომელი ათასწლეულიდან?', a:'ჩვ.წ.-მდე III ათასწლეული (შუმერები)'},
+  {q:'ბათუმი ქართული ქალაქია — რომელ ზღვაზეა?', a:'შავ ზღვაზე'},
+  {q:'რომელი პლანეტა ყველაზე დიდია მზის სისტემაში?', a:'იუპიტერი'},
+];
+
+let quizDaily = [];
+let quizAnswered = {};
+
+function loadQuiz(){
+  const today = new Date().toISOString().split('T')[0];
+  // pick 5 questions based on date seed
+  const seed = today.split('-').join('');
+  const shuffled = [...QUIZ_QUESTIONS].sort((a,b)=>{
+    const h = (s,i) => ((parseInt(s)+i*7919)%QUIZ_QUESTIONS.length);
+    return h(seed,QUIZ_QUESTIONS.indexOf(a)) - h(seed,QUIZ_QUESTIONS.indexOf(b));
+  });
+  quizDaily = shuffled.slice(0,5);
+  quizAnswered = db.quizAnswered||{};
+  renderQuiz(today);
+}
+
+function renderQuiz(today){
+  const el = document.getElementById('quizContent');
+  if(!el) return;
+  let html = `<div style="font-size:11px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:12px;text-align:center">${today} — დღის კითხვები</div>`;
+  quizDaily.forEach((q,i)=>{
+    const key = today+'_'+i;
+    const shown = quizAnswered[key];
+    html += `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px">
+      <div style="font-size:13px;color:var(--text);font-weight:600;margin-bottom:8px">${i+1}. ${q.q}</div>
+      <div id="ans_${i}" style="display:${shown?'block':'none'};background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:var(--rs);padding:8px;font-size:12px;color:var(--green);margin-bottom:8px">✅ ${q.a}</div>
+      ${!shown?`<button onclick="showAnswer(${i},'${today}')" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);color:var(--text2);font-size:12px;padding:6px 14px;cursor:pointer;font-family:inherit">პასუხის გამჟღავნება</button>`:''}
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function showAnswer(i, today){
+  const key = today+'_'+i;
+  if(!db.quizAnswered) db.quizAnswered={};
+  db.quizAnswered[key] = true;
+  quizAnswered[key] = true;
+  save();
+  const el = document.getElementById('ans_'+i);
+  if(el){ el.style.display='block'; el.previousElementSibling&&el.previousElementSibling.remove(); }
+  // remove button
+  const btn = el.nextElementSibling;
+  if(btn&&btn.tagName==='BUTTON') btn.remove();
+}
+
+// ── SNAKE ──
+let snakeGame = null;
+
+function initSnakeCanvas(){
+  const canvas = document.getElementById('snakeCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg3')||'#243447';
+  ctx.fillRect(0,0,300,300);
+  ctx.fillStyle = '#64748b';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('▶ დააჭირე დასაწყებად', 150, 155);
+}
+
+function startSnake(){
+  if(snakeGame) clearInterval(snakeGame.interval);
+  const canvas = document.getElementById('snakeCanvas');
+  const ctx = canvas.getContext('2d');
+  const CELL = 15, COLS = 20, ROWS = 20;
+  let snake = [{x:10,y:10}];
+  let dir = {x:1,y:0};
+  let nextDir = {x:1,y:0};
+  let food = randomFood();
+  let score = 0;
+  const best = parseInt(localStorage.getItem('snakeBest')||'0');
+
+  function randomFood(){
+    return {x:Math.floor(Math.random()*COLS), y:Math.floor(Math.random()*ROWS)};
+  }
+
+  function draw(){
+    ctx.fillStyle = '#1a2332';
+    ctx.fillRect(0,0,300,300);
+    // food
+    ctx.fillStyle = '#f87171';
+    ctx.beginPath();
+    ctx.arc(food.x*CELL+CELL/2, food.y*CELL+CELL/2, CELL/2-1, 0, Math.PI*2);
+    ctx.fill();
+    // snake
+    snake.forEach((s,i)=>{
+      ctx.fillStyle = i===0?'#10b981':'#059669';
+      ctx.beginPath();
+      ctx.roundRect(s.x*CELL+1, s.y*CELL+1, CELL-2, CELL-2, 3);
+      ctx.fill();
+    });
+  }
+
+  function tick(){
+    dir = nextDir;
+    const head = {x:snake[0].x+dir.x, y:snake[0].y+dir.y};
+    if(head.x<0||head.x>=COLS||head.y<0||head.y>=ROWS||snake.some(s=>s.x===head.x&&s.y===head.y)){
+      clearInterval(snakeGame.interval);
+      ctx.fillStyle='rgba(0,0,0,.7)';
+      ctx.fillRect(0,0,300,300);
+      ctx.fillStyle='#f1f5f9';
+      ctx.font='bold 18px sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('თამაში დასრულდა!', 150, 140);
+      ctx.font='14px sans-serif';
+      ctx.fillStyle='#94a3b8';
+      ctx.fillText('ქულა: '+score, 150, 165);
+      if(score>best){ localStorage.setItem('snakeBest',score); document.getElementById('snakeBest').textContent=score; }
+      return;
+    }
+    snake.unshift(head);
+    if(head.x===food.x&&head.y===food.y){
+      score++;
+      document.getElementById('snakeScore').textContent=score;
+      food=randomFood();
+    } else snake.pop();
+    draw();
+  }
+
+  snakeGame = {interval: setInterval(tick, 150), setDir:(dx,dy)=>{ if(dx!==0&&dir.x!==0) return; if(dy!==0&&dir.y!==0) return; nextDir={x:dx,y:dy}; }};
+  document.getElementById('snakeScore').textContent='0';
+  if(score>best) document.getElementById('snakeBest').textContent=score;
+  else document.getElementById('snakeBest').textContent=best;
+  draw();
+}
+
+function snakeDir(dx,dy){ if(snakeGame) snakeGame.setDir(dx,dy); }
+
+// Touch swipe for snake
+(function(){
+  let tx=0,ty=0;
+  document.addEventListener('touchstart',e=>{if(e.target.id==='snakeCanvas'){tx=e.touches[0].clientX;ty=e.touches[0].clientY;}},{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(e.target.id!=='snakeCanvas') return;
+    const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dx)>Math.abs(dy)){ snakeDir(dx>0?1:-1,0); } else { snakeDir(0,dy>0?1:-1); }
+  },{passive:true});
+})();
+
+// ── MEMORY GAME ──
+let memSeq=[], memInput=[], memLevel=1, memLives=3, memState='idle';
+
+function startMemory(){
+  memLevel=1; memLives=3; memSeq=[]; memInput=[];
+  document.getElementById('memLevel').textContent=1;
+  document.getElementById('memLives').textContent=3;
+  document.getElementById('memMsg').textContent='';
+  memState='showing';
+  nextMemRound();
+}
+
+function nextMemRound(){
+  memSeq.push(Math.floor(Math.random()*9));
+  memInput=[];
+  memState='showing';
+  document.getElementById('memMsg').textContent='დაიმახსოვრე!';
+  const disp=document.getElementById('memDisplay');
+  disp.textContent='';
+  let i=0;
+  const show=()=>{
+    if(i<memSeq.length){
+      disp.textContent=memSeq[i]+1;
+      i++;
+      setTimeout(()=>{ disp.textContent=''; setTimeout(show,300); },600);
+    } else {
+      disp.textContent='?';
+      memState='input';
+      document.getElementById('memMsg').textContent='გაიმეორე!';
+      renderMemButtons();
+    }
+  };
+  setTimeout(show, 500);
+}
+
+function renderMemButtons(){
+  const el=document.getElementById('memInput');
+  el.innerHTML=[1,2,3,4,5,6,7,8,9].map(n=>`<button onclick="memPress(${n})" style="width:60px;height:60px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);font-size:20px;font-weight:700;color:var(--text);cursor:pointer">${n}</button>`).join('');
+}
+
+function memPress(n){
+  if(memState!=='input') return;
+  memInput.push(n-1);
+  const idx=memInput.length-1;
+  if(memInput[idx]!==memSeq[idx]){
+    memLives--;
+    document.getElementById('memLives').textContent=memLives;
+    document.getElementById('memMsg').textContent='❌ შეცდომა!';
+    document.getElementById('memInput').innerHTML='';
+    if(memLives<=0){
+      document.getElementById('memMsg').textContent='თამაში დასრულდა! დონე: '+memLevel;
+      document.getElementById('memDisplay').textContent='';
+      memState='idle';
+    } else setTimeout(()=>{ memSeq=[...memSeq.slice(0,-1)]; nextMemRound(); },1000);
+    return;
+  }
+  if(memInput.length===memSeq.length){
+    memLevel++;
+    document.getElementById('memLevel').textContent=memLevel;
+    document.getElementById('memMsg').textContent='✅ სწორია!';
+    document.getElementById('memInput').innerHTML='';
+    memState='idle';
+    setTimeout(nextMemRound,1000);
+  }
+}
+
+// ── RPS ──
+function playRps(choice){
+  const choices=['✊','✌️','🖐'];
+  const names={'✊':'ქვა','✌️':'მაკრატელი','🖐':'ქაღალდი'};
+  const cpu=choices[Math.floor(Math.random()*3)];
+  document.getElementById('rpsResult').textContent=choice+' vs '+cpu;
+  let msg='', color='var(--text)';
+  if(choice===cpu){ msg='🤝 ფრე!'; color='var(--amber)'; document.getElementById('rpsDraw').textContent=parseInt(document.getElementById('rpsDraw').textContent)+1; }
+  else if((choice==='✊'&&cpu==='✌️')||(choice==='✌️'&&cpu==='🖐')||(choice==='🖐'&&cpu==='✊')){
+    msg='🎉 მოიგე!'; color='var(--green)'; document.getElementById('rpsWin').textContent=parseInt(document.getElementById('rpsWin').textContent)+1;
+  } else { msg='😔 წააგე!'; color='var(--red)'; document.getElementById('rpsLose').textContent=parseInt(document.getElementById('rpsLose').textContent)+1; }
+  const msgEl=document.getElementById('rpsMsg');
+  msgEl.textContent=msg; msgEl.style.color=color;
+}
+
+// ── REACTION TEST ──
+let reactState='idle', reactTimer=null, reactStart=0;
+
+function handleReaction(){
+  const box=document.getElementById('reactBox');
+  const result=document.getElementById('reactResult');
+  if(reactState==='idle'){
+    reactState='waiting';
+    box.style.background='var(--red)';
+    box.textContent='დაელოდე...';
+    result.textContent='';
+    const delay=1000+Math.random()*3000;
+    reactTimer=setTimeout(()=>{
+      box.style.background='var(--green)';
+      box.textContent='ახლა!';
+      reactStart=Date.now();
+      reactState='ready';
+    },delay);
+  } else if(reactState==='waiting'){
+    clearTimeout(reactTimer);
+    box.style.background='var(--amber)';
+    box.textContent='ძალიან ადრე! სცადე თავიდან';
+    result.textContent='';
+    reactState='idle';
+    setTimeout(()=>{ box.style.background='var(--bg3)'; box.textContent='დააჭირე დასაწყებად'; },1500);
+  } else if(reactState==='ready'){
+    const ms=Date.now()-reactStart;
+    reactState='idle';
+    box.style.background='var(--bg3)';
+    box.textContent='დააჭირე დასაწყებად';
+    result.textContent=ms+' ms';
+    const best=parseInt(localStorage.getItem('reactBest')||'9999');
+    if(ms<best){ localStorage.setItem('reactBest',ms); document.getElementById('reactBest').textContent=ms; }
+    else document.getElementById('reactBest').textContent=best===9999?'—':best;
+  }
+}
+
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 </script>
 
@@ -3789,6 +4103,10 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
     <div class="bnav-ico">📊</div>
     <div class="bnav-lbl">სტატისტ.</div>
   </button>
+  <button class="bnav-btn" id="bnavFun" onclick="switchSheet('fun')">
+    <div class="bnav-ico">🎮</div>
+    <div class="bnav-lbl">თამაში</div>
+  </button>
   <button class="bnav-btn" id="bnavF" onclick="switchSheet('feedback')">
     <div class="bnav-ico">💡</div>
     <div class="bnav-lbl">იდეა</div>
@@ -3800,7 +4118,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">📅 შეხვედრები</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.7</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.8</button>
     </div>
     <div class="profile-avatar" id="hdrAv_meet" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" style="flex-shrink:0"></div>
     <button class="btn bok" style="padding:7px 14px;font-size:13px" onclick="openM('mAddMeet')">+ დამატება</button>
@@ -3820,7 +4138,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">🚗 ავტო</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.7</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.8</button>
     </div>
     <div class="profile-avatar" id="hdrAv_auto" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" style="flex-shrink:0"></div>
     <button class="btn bok" style="padding:7px 14px;font-size:13px" onclick="openAddCarModal()">+ მანქანა</button>
@@ -4083,7 +4401,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">💡 შეცდომა / იდეა</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.7</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.8</button>
     </div>
     <div class="profile-avatar" id="hdrAv_idea" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" style="flex-shrink:0"></div>
     <button onclick="openM('modalChangelog')" style="background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);color:var(--accent);border-radius:20px;font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer;font-family:inherit">📋 ვერსიები</button>
@@ -4201,56 +4519,105 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
     <div class="mh"></div>
     <div class="mt">📋 ვერსიების ისტორია</div>
 
-    <div style="background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.25);border-radius:var(--r);padding:14px;margin-bottom:12px">
+    <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:var(--r);padding:14px;margin-bottom:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:15px;font-weight:700;color:var(--accent)">V_1.7 — მიმდინარე</div>
+        <div style="font-size:15px;font-weight:700;color:var(--accent)">V_1.8 — მიმდინარე</div>
         <span class="badge b-green">ახალი</span>
       </div>
       <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        ✅ გასართობი შიტი — 🐍 Snake, 🧠 მეხსიერება, ✊ ქვა-მაკრ.-ქაღ., ⚡ რეაქცია<br>
+        ✅ "რა? სად? როდის?" — 5 კითხვა დღეში ქართულად<br>
+        ✅ Session Timeout — 1 წუთი ფონში → ავტო-გამოსვლა<br>
+        ✅ ნავიგაციის თანმიმდევრობა გასწორდა
+      </div>
+    </div>
+
+    <div style="background:var(--bg3);border-radius:var(--r);padding:12px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">V_1.7</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        ✅ სტატისტიკის შიტი — თვე/კვარტ./წელი<br>
+        ✅ შემოსავლების წყაროები + გასავლების კატეგორიები<br>
+        ✅ ტრენდის ბარ ჩარტი<br>
+        ✅ ანალიტიკის insight ბლოკი
+      </div>
+    </div>
+
+    <div style="background:var(--bg3);border-radius:var(--r);padding:12px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">V_1.6</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        ✅ ვალდებულებების შიტი (🤝)<br>
+        ✅ მისაღები და გასაცემი ვალდებულებები<br>
+        ✅ ვადაგადაცილება — წითელი მაჩვენებელი<br>
+        ✅ არქივი ფილტრაციით<br>
+        ✅ შეტყობინება 1 დღით ადრე
+      </div>
+    </div>
+
+    <div style="background:var(--bg3);border-radius:var(--r);padding:12px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">V_1.5</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        ✅ B-Mid დიზაინი — ახალი ვიზუალური სტილი<br>
+        ✅ პროფილის ფოტო — ყველა გვერდზე avatar<br>
+        ✅ მანქანის ფოტო — dashboard-ზე<br>
+        🐛 Firestore Rules — ვადაგასული წესები შეიცვალა
+      </div>
+    </div>
+
+    <div style="background:var(--bg3);border-radius:var(--r);padding:12px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">V_1.4</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        ✅ Firebase Auth — რეგისტრაცია, შესვლა, პაროლის აღდგენა<br>
+        ✅ Firestore Cloud — მონაცემები ნებისმიერი მოწყობილობიდან<br>
+        ✅ GitHub Pages — PWA (Home Screen)<br>
+        ✅ შეხვედრების კალენდარი<br>
+        ✅ ვადაგასული შეხვედრები — შედგა/გადაიდო<br>
+        ✅ ავტოს ჯანმრთელობა — 100%-ის სია<br>
+        🐛 მონაცემების შენახვის პრობლემა
+      </div>
+    </div>
+
+    <div style="background:var(--bg3);border-radius:var(--r);padding:12px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">V_1.3</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
         ✅ ავტოს მოდული — სერვისები, საწვავი, ისტორია<br>
         ✅ შეხვედრების მოდული — პირადი, ჯგუფური, ქეიფი<br>
-        ✅ ქეიფის შაბლონი — მონაწილეები + პროდუქტები<br>
         ✅ სწრაფი გადახდა — 12 შაბლონი<br>
-        ✅ ექსპორტი / იმპორტი<br>
-        ✅ გადახდილი ხარჯების არქივი<br>
-        ✅ ვერსიის მაჩვენებელი<br>
-        🐛 ნავიგაციის გამოსწორება
+        ✅ ექსპორტი / იმპორტი
       </div>
     </div>
 
-    <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:12px">
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">V_1.2</div>
+    <div style="background:var(--bg3);border-radius:var(--r);padding:12px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">V_1.2</div>
       <div style="font-size:12px;color:var(--text2);line-height:1.8">
-        ✅ ავტოს მოდული (საწყისი ვერსია)<br>
+        ✅ ავტოს მოდული საწყისი ვერსია<br>
         ✅ შეცდომა/იდეა შიტი<br>
         ✅ ქვედა ნავიგაცია (4 შიტი)<br>
-        ✅ მანქანის ჯანმრთელობის ქულა<br>
-        🐛 switchSheet ბაგის გამოსწორება
+        🐛 switchSheet ბაგი
       </div>
     </div>
 
-    <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:12px">
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">V_1.1</div>
+    <div style="background:var(--bg3);border-radius:var(--r);padding:12px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">V_1.1</div>
       <div style="font-size:12px;color:var(--text2);line-height:1.8">
         ✅ შეხვედრების მოდული<br>
         ✅ პაროლის სისტემა<br>
-        ✅ კომუნალურების თვიური შეყვანა<br>
+        ✅ კომუნალურების შეყვანა<br>
         ✅ დასადასტურებელი ოპერაციები<br>
         ✅ შესყიდვების მოდული
       </div>
     </div>
 
-    <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:16px">
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">V_1.0</div>
+    <div style="background:var(--bg3);border-radius:var(--r);padding:12px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">V_1.0</div>
       <div style="font-size:12px;color:var(--text2);line-height:1.8">
-        ✅ ფინანსების მოდული (საწყისი)<br>
+        ✅ ფინანსების მოდული<br>
         ✅ Setup სისტემა<br>
         ✅ ბალანსი, შემოსავლები, გასავლები<br>
         ✅ სესხები, კომუნალური, ფიქსირებული
       </div>
     </div>
 
-    <button class="btn bp" onclick="closeM('modalChangelog')">დახურვა</button>
+    <button class="btn bp" onclick="closeM('modalChangelog')" style="width:100%">დახურვა</button>
   </div>
 </div>
 
@@ -4369,7 +4736,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">🤝 ვალდებულებები</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.7</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.8</button>
     </div>
     <div class="profile-avatar" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" id="hdrAv_obl" style="flex-shrink:0"></div>
   </div>
@@ -4452,7 +4819,7 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   <div class="app-hd">
     <div>
       <div class="app-t">📊 სტატისტიკა</div>
-      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.7</button>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.8</button>
     </div>
     <div class="profile-avatar" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" id="hdrAv_stat" style="flex-shrink:0"></div>
   </div>
@@ -4465,6 +4832,99 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
   </div>
 
   <div style="padding:0 16px;overflow-y:auto;padding-bottom:80px" id="statContent"></div>
+</div>
+
+<!-- FUN SHEET -->
+<div class="sheet" id="sheetFun">
+  <div class="app-hd">
+    <div>
+      <div class="app-t">🎮 გასართობი</div>
+      <button onclick="openM('modalChangelog')" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.5px;padding:0;font-family:inherit;text-decoration:underline">Personal Manager V_1.8</button>
+    </div>
+    <div class="profile-avatar" onclick="switchSheet('personal');setTimeout(()=>showTab('settings'),100)" title="პროფილი" id="hdrAv_fun" style="flex-shrink:0"></div>
+  </div>
+
+  <div style="padding:0 16px;overflow-y:auto;padding-bottom:80px">
+    <!-- Game tabs -->
+    <div class="tabs" style="margin-bottom:14px">
+      <button class="tab active" onclick="showFunTab('quiz')">🎯 კვიზი</button>
+      <button class="tab" onclick="showFunTab('snake')">🐍 Snake</button>
+      <button class="tab" onclick="showFunTab('memory')">🧠 მეხს.</button>
+      <button class="tab" onclick="showFunTab('rps')">✊ ქვა</button>
+      <button class="tab" onclick="showFunTab('reaction')">⚡ რეაქ.</button>
+    </div>
+
+    <!-- QUIZ TAB (რა სად როდის) -->
+    <div class="tb active" id="funTabQuiz">
+      <div id="quizContent">
+        <div style="text-align:center;padding:20px 0">
+          <div style="font-size:40px;margin-bottom:8px">🎯</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">რა? სად? როდის?</div>
+          <div style="font-size:13px;color:var(--text3);margin-bottom:16px">დღეში 5 კითხვა ქართულ ენაზე</div>
+          <button class="btn bp" style="width:100%" onclick="loadQuiz()">🎲 კითხვების ჩატვირთვა</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SNAKE TAB -->
+    <div class="tb" id="funTabSnake">
+      <div style="text-align:center;margin-bottom:10px">
+        <span style="font-size:13px;color:var(--text2)">ქულა: </span>
+        <span style="font-size:16px;font-weight:700;color:var(--accent)" id="snakeScore">0</span>
+        <span style="font-size:13px;color:var(--text2);margin-left:10px">საუკეთესო: </span>
+        <span style="font-size:16px;font-weight:700;color:var(--amber)" id="snakeBest">0</span>
+      </div>
+      <canvas id="snakeCanvas" width="300" height="300" style="display:block;margin:0 auto;background:var(--bg3);border-radius:var(--rs);border:1px solid var(--border);touch-action:none"></canvas>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;max-width:200px;margin-left:auto;margin-right:auto">
+        <div></div>
+        <button onclick="snakeDir(0,-1)" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:12px;font-size:18px;cursor:pointer">▲</button>
+        <div></div>
+        <button onclick="snakeDir(-1,0)" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:12px;font-size:18px;cursor:pointer">◀</button>
+        <button onclick="startSnake()" style="background:var(--accent);border:none;border-radius:var(--rs);padding:12px;font-size:12px;font-weight:700;color:#fff;cursor:pointer">▶</button>
+        <button onclick="snakeDir(1,0)" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:12px;font-size:18px;cursor:pointer">▶</button>
+        <div></div>
+        <button onclick="snakeDir(0,1)" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:12px;font-size:18px;cursor:pointer">▼</button>
+        <div></div>
+      </div>
+    </div>
+
+    <!-- MEMORY TAB -->
+    <div class="tb" id="funTabMemory">
+      <div style="text-align:center;margin-bottom:12px">
+        <div style="font-size:13px;color:var(--text2)">დონე: <span id="memLevel" style="font-weight:700;color:var(--accent)">1</span> &nbsp;|&nbsp; ცდები: <span id="memLives" style="font-weight:700;color:var(--red)">3</span></div>
+      </div>
+      <div id="memDisplay" style="font-size:32px;font-weight:700;text-align:center;min-height:50px;color:var(--accent);letter-spacing:6px;margin-bottom:12px"></div>
+      <div id="memInput" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:12px"></div>
+      <div id="memMsg" style="text-align:center;font-size:13px;color:var(--text2);margin-bottom:10px"></div>
+      <button class="btn bp" style="width:100%" onclick="startMemory()">🎮 დაწყება</button>
+    </div>
+
+    <!-- RPS TAB -->
+    <div class="tb" id="funTabRps">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:13px;color:var(--text2)">მოგება: <span id="rpsWin" style="color:var(--green);font-weight:700">0</span> &nbsp; წაგება: <span id="rpsLose" style="color:var(--red);font-weight:700">0</span> &nbsp; ფრე: <span id="rpsDraw" style="color:var(--amber);font-weight:700">0</span></div>
+      </div>
+      <div id="rpsResult" style="text-align:center;font-size:50px;min-height:60px;margin-bottom:8px"></div>
+      <div id="rpsMsg" style="text-align:center;font-size:14px;font-weight:700;min-height:20px;margin-bottom:16px;color:var(--text)"></div>
+      <div style="display:flex;gap:12px;justify-content:center">
+        <button onclick="playRps('✊')" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;font-size:32px;cursor:pointer">✊</button>
+        <button onclick="playRps('✌️')" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;font-size:32px;cursor:pointer">✌️</button>
+        <button onclick="playRps('🖐')" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;font-size:32px;cursor:pointer">🖐</button>
+      </div>
+      <div style="text-align:center;margin-top:10px;font-size:12px;color:var(--text3)">✊ ქვა &nbsp; ✌️ მაკრატელი &nbsp; 🖐 ქაღალდი</div>
+    </div>
+
+    <!-- REACTION TAB -->
+    <div class="tb" id="funTabReaction">
+      <div style="text-align:center;padding:10px 0">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">საუკეთესო: <span id="reactBest" style="font-weight:700;color:var(--amber)">—</span> ms</div>
+        <div id="reactBox" onclick="handleReaction()" style="width:100%;height:180px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--text2);transition:background .1s;margin-bottom:12px;user-select:none">
+          დააჭირე დასაწყებად
+        </div>
+        <div id="reactResult" style="font-size:24px;font-weight:700;color:var(--accent);min-height:36px"></div>
+      </div>
+    </div>
+  </div>
 </div>
 </body>
 </html>
