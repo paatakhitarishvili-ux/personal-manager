@@ -1480,6 +1480,11 @@ function switchSheet(name){
     document.getElementById('sheetFeedback').classList.add('active');
     document.getElementById('bnavF').classList.add('active');
     renderFeedback();
+  } else if(name==='obligations'){
+    document.getElementById('sheetObligations').classList.add('active');
+    document.getElementById('bnavObl').classList.add('active');
+    renderObligations();
+    updateAllAvatars();
   }
 }
 
