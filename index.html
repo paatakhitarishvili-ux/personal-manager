@@ -218,6 +218,211 @@ select option{background:var(--bg3)}
 .ac-util-inp{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:15px;padding:9px 12px;font-family:inherit;outline:none;margin-top:6px;margin-bottom:4px}
 .ac-util-inp:focus{border-color:var(--accent)}
 </style>
+<script>
+// ══════════════════════════════════════════
+// TRANSLATIONS V_1.4
+// ══════════════════════════════════════════
+const LANGS = {
+  ka: {
+    // Nav
+    personal:'პირადი', meetings:'შეხვედრები', auto:'ავტო', idea:'იდეა',
+    // Personal
+    manager:'მენეჯერი', main:'მთავარი', month:'თვე', expenses:'გასავ.',
+    purchases:'შესყიდ.', archive:'არქივი', settings:'⚙️',
+    balance:'ბალანსი', income:'შემოსავალი', expense:'გასავალი',
+    quick_pay:'სწრაფი გადახდა',
+    monthly_income:'ყოველთვიური შემოსავლები',
+    loans:'სესხები', fixed_exp:'ფიქსირებული გასავლები',
+    utilities:'კომუნალური — ამ თვეში',
+    one_time_inc:'ერთჯერადი შემოსავლები',
+    one_time_exp:'ერთჯერადი ხარჯები',
+    planned_purch:'დაგეგმილი შესყიდვები',
+    add:'+ დამატება', save:'✓ შენახვა', cancel:'გაუქმება',
+    delete:'წაშლა', close:'დახურვა',
+    name:'სახელი', amount:'თანხა', currency:'ვალუტა', date:'თარიღი',
+    day:'რიცხვი', note:'შენიშვნა',
+    // Meetings
+    meet_main:'მთავარი', meet_all:'ყველა', meet_archive:'არქივი',
+    today:'📍 დღეს', next7:'📆 მომდევნო 7 დღე', flexible:'🔄 მოქნილი',
+    // Auto
+    dashboard:'📊 დეშბორდი', services:'🔧 სერვისები',
+    fuel:'⛽ საწვავი', history:'📋 ისტორია',
+    health:'❤️ მანქანის ჯანმრთელობა',
+    mileage:'გარბენი', next_service:'შემდეგი სერვისი',
+    for_100:tr('for_100'),
+    // Settings
+    account:'ანგარიში', security:'უსაფრთხოება',
+    change_pw:'🔐 პაროლის შეცვლა', logout:'🚪 გამოსვლა',
+    notifications:'შეტყობინებები', push_notif:'🔔 Push შეტყობინებები',
+    enabled:'ჩართულია ✅', disabled:'გამორთულია', enable:'ჩართვა',
+    data_backup:'მონაცემების სარეზერვო ასლი',
+    export:'📤 ექსპორტი', import:'📥 იმპორტი',
+    language:'🌐 ენა', reset:'🗑 გადატვირთვა',
+    // Feedback
+    feedback_title:'შეცდომა / იდეა',
+    topic:'თემა', type:'ტიპი', description:'აღწერა',
+    send:'გაგზავნა',
+    // Common
+    no_data:'მონაცემი არ არის', loading:'იტვირთება...',
+    confirm_delete:'დარწმუნებული ხარ?', yes:'კი', no:'არა',
+    saved:'✅ შენახულია', deleted:'🗑 წაიშალა', added:'✅ დამატებულია',
+    error:'⚠️ შეცდომა', success:'✅ წარმატება',
+    version:'ვერსია',
+  },
+  en: {
+    personal:'Personal', meetings:'Meetings', auto:'Auto', idea:'Ideas',
+    manager:'Manager', main:'Main', month:'Month', expenses:'Expenses',
+    purchases:'Purchases', archive:'Archive', settings:'⚙️',
+    balance:'Balance', income:'Income', expense:'Expense',
+    quick_pay:'Quick Payment',
+    monthly_income:'Monthly Income',
+    loans:'Loans', fixed_exp:'Fixed Expenses',
+    utilities:'Utilities — This Month',
+    one_time_inc:'One-time Income',
+    one_time_exp:'One-time Expenses',
+    planned_purch:'Planned Purchases',
+    add:'+ Add', save:'✓ Save', cancel:'Cancel',
+    delete:'Delete', close:'Close',
+    name:'Name', amount:'Amount', currency:'Currency', date:'Date',
+    day:'Day', note:'Note',
+    meet_main:'Main', meet_all:'All', meet_archive:'Archive',
+    today:'📍 Today', next7:'📆 Next 7 Days', flexible:'🔄 Flexible',
+    dashboard:'📊 Dashboard', services:'🔧 Services',
+    fuel:'⛽ Fuel', history:'📋 History',
+    health:'❤️ Car Health',
+    mileage:'Mileage', next_service:'Next Service',
+    for_100:'Required for 100%:',
+    account:'Account', security:'Security',
+    change_pw:'🔐 Change Password', logout:'🚪 Logout',
+    notifications:'Notifications', push_notif:'🔔 Push Notifications',
+    enabled:'Enabled ✅', disabled:'Disabled', enable:'Enable',
+    data_backup:'Data Backup',
+    export:'📤 Export', import:'📥 Import',
+    language:'🌐 Language', reset:'🗑 Reset',
+    feedback_title:'Bugs / Ideas',
+    topic:'Topic', type:'Type', description:'Description',
+    send:'Send',
+    no_data:'No data', loading:'Loading...',
+    confirm_delete:'Are you sure?', yes:'Yes', no:'No',
+    saved:'✅ Saved', deleted:'🗑 Deleted', added:'✅ Added',
+    error:'⚠️ Error', success:'✅ Success',
+    version:'Version',
+  },
+  ru: {
+    personal:'Личное', meetings:'Встречи', auto:'Авто', idea:'Идеи',
+    manager:'Менеджер', main:'Главная', month:'Месяц', expenses:'Расходы',
+    purchases:'Покупки', archive:'Архив', settings:'⚙️',
+    balance:'Баланс', income:'Доход', expense:'Расход',
+    quick_pay:'Быстрый платёж',
+    monthly_income:'Ежемесячный доход',
+    loans:'Кредиты', fixed_exp:'Постоянные расходы',
+    utilities:'Коммунальные — этот месяц',
+    one_time_inc:'Разовый доход',
+    one_time_exp:'Разовые расходы',
+    planned_purch:'Запланированные покупки',
+    add:'+ Добавить', save:'✓ Сохранить', cancel:'Отмена',
+    delete:'Удалить', close:'Закрыть',
+    name:'Название', amount:'Сумма', currency:'Валюта', date:'Дата',
+    day:'Число', note:'Заметка',
+    meet_main:'Главная', meet_all:'Все', meet_archive:'Архив',
+    today:'📍 Сегодня', next7:'📆 Следующие 7 дней', flexible:'🔄 Гибко',
+    dashboard:'📊 Панель', services:'🔧 Сервисы',
+    fuel:'⛽ Топливо', history:'📋 История',
+    health:'❤️ Здоровье авто',
+    mileage:'Пробег', next_service:'Следующий сервис',
+    for_100:'Для 100% необходимо:',
+    account:'Аккаунт', security:'Безопасность',
+    change_pw:'🔐 Изменить пароль', logout:'🚪 Выйти',
+    notifications:'Уведомления', push_notif:'🔔 Push уведомления',
+    enabled:'Включено ✅', disabled:'Отключено', enable:'Включить',
+    data_backup:'Резервная копия данных',
+    export:'📤 Экспорт', import:'📥 Импорт',
+    language:'🌐 Язык', reset:'🗑 Сброс',
+    feedback_title:'Ошибки / Идеи',
+    topic:'Тема', type:'Тип', description:'Описание',
+    send:'Отправить',
+    no_data:'Нет данных', loading:'Загрузка...',
+    confirm_delete:'Вы уверены?', yes:'Да', no:'Нет',
+    saved:'✅ Сохранено', deleted:'🗑 Удалено', added:'✅ Добавлено',
+    error:'⚠️ Ошибка', success:'✅ Успешно',
+    version:'Версия',
+  }
+};
+
+let currentLang = 'ka';
+function tr(key){ return (LANGS[currentLang]||LANGS.ka)[key] || (LANGS.ka)[key] || key; }
+function setLang(lang){
+  currentLang = lang;
+  db.lang = lang;
+  save();
+  applyLang();
+  renderAll();
+}
+
+function applyLang(){
+  // bottom nav
+  const bnavLabels={bnavP:tr('personal'),bnavM:tr('meetings'),bnavA:tr('auto'),bnavF:tr('idea')};
+  Object.entries(bnavLabels).forEach(([id,label])=>{
+    const el=document.getElementById(id);
+    if(el){const lbl=el.querySelector('.bnav-lbl');if(lbl)lbl.textContent=label;}
+  });
+
+  // personal tabs
+  const tabLabels=[tr('main'),tr('month'),tr('expenses'),tr('purchases'),tr('archive'),tr('settings')];
+  document.querySelectorAll('#scApp .tab').forEach((tab,i)=>{if(tabLabels[i])tab.textContent=tabLabels[i];});
+
+  // meetings tabs
+  const mTabLabels=[tr('meet_main'),tr('meet_all'),tr('meet_archive')];
+  document.querySelectorAll('#sheetMeetings .tab').forEach((tab,i)=>{if(mTabLabels[i])tab.textContent=mTabLabels[i];});
+
+  // auto tabs - dashboard, services, fuel, history
+  const aTabLabels=[tr('dashboard'),tr('services'),tr('fuel'),tr('history')];
+  document.querySelectorAll('#sheetAuto .tab, #sheetCarDetail .tab').forEach((tab,i)=>{if(aTabLabels[i])tab.textContent=aTabLabels[i];});
+
+  // version labels
+  document.querySelectorAll('.ver-lbl').forEach(el=>el.textContent='Personal Manager V_1.4');
+
+  // auth screen
+  const pwSub=document.getElementById('pwSub');
+  if(pwSub&&pwSub.textContent===LANGS.ka.loading||pwSub&&pwSub.textContent==='შედი შენს ანგარიშში'){
+    // keep as is during loading
+  }
+
+  // section titles via data-i18n
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key=el.getAttribute('data-i18n');
+    el.textContent=tr(key);
+  });
+
+  // language selector
+  const langSel=document.getElementById('langSelector');
+  if(langSel) langSel.value=currentLang;
+
+  // modal titles
+  const modalTitlesMap={
+    'mAddMI':{ka:'💰 შემოსავლის დამატება',en:'💰 Add Income',ru:'💰 Добавить доход'},
+    'mAddOTI':{ka:'⚡ ერთჯერადი შემოსავალი',en:'⚡ One-time Income',ru:'⚡ Разовый доход'},
+    'mAddOTE':{ka:'💸 ერთჯერადი ხარჯი',en:'💸 One-time Expense',ru:'💸 Разовый расход'},
+    'mAddP':{ka:'🛒 შესყიდვის დამატება',en:'🛒 Add Purchase',ru:'🛒 Добавить покупку'},
+    'mAddLoan':{ka:'🏦 სესხის დამატება',en:'🏦 Add Loan',ru:'🏦 Добавить кредит'},
+    'mAddFixed':{ka:'📌 ფიქსირებული ხარჯი',en:'📌 Add Fixed Expense',ru:'📌 Добавить расход'},
+    'mAddMeet':{ka:'📅 შეხვედრის დამატება',en:'📅 Add Meeting',ru:'📅 Добавить встречу'},
+    'modalQuickPay':{ka:'💸 სწრაფი გადახდა',en:'💸 Quick Payment',ru:'💸 Быстрый платёж'},
+    'mAddCar':{ka:'🚗 მანქანის დამატება',en:'🚗 Add Car',ru:'🚗 Добавить авто'},
+    'modalAddService':{ka:'🔧 სერვისის დამატება',en:'🔧 Add Service',ru:'🔧 Добавить сервис'},
+    'modalAddFuel':{ka:'⛽ საწვავის შეყვანა',en:'⛽ Add Fuel',ru:'⛽ Добавить топливо'},
+  };
+  Object.entries(modalTitlesMap).forEach(([id,titles])=>{
+    const modal=document.getElementById(id);
+    if(modal){const mt=modal.querySelector('.mt');if(mt)mt.textContent=titles[currentLang]||titles.ka;}
+  });
+
+  // quick pay button text
+  const qpBtns=document.querySelectorAll('button[onclick="openQuickPay()"] span');
+  qpBtns.forEach(sp=>{if(sp.textContent&&sp.textContent.length>3)sp.textContent=tr('quick_pay');});
+}
+
+</script>
 <!-- Firebase SDKs (compat version - works globally) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -518,209 +723,6 @@ select option{background:var(--bg3)}
 </div>
 
 <script>
-
-// ══════════════════════════════════════════
-// TRANSLATIONS V_1.4
-// ══════════════════════════════════════════
-const LANGS = {
-  ka: {
-    // Nav
-    personal:'პირადი', meetings:'შეხვედრები', auto:'ავტო', idea:'იდეა',
-    // Personal
-    manager:'მენეჯერი', main:'მთავარი', month:'თვე', expenses:'გასავ.',
-    purchases:'შესყიდ.', archive:'არქივი', settings:'⚙️',
-    balance:'ბალანსი', income:'შემოსავალი', expense:'გასავალი',
-    quick_pay:'სწრაფი გადახდა',
-    monthly_income:'ყოველთვიური შემოსავლები',
-    loans:'სესხები', fixed_exp:'ფიქსირებული გასავლები',
-    utilities:'კომუნალური — ამ თვეში',
-    one_time_inc:'ერთჯერადი შემოსავლები',
-    one_time_exp:'ერთჯერადი ხარჯები',
-    planned_purch:'დაგეგმილი შესყიდვები',
-    add:'+ დამატება', save:'✓ შენახვა', cancel:'გაუქმება',
-    delete:'წაშლა', close:'დახურვა',
-    name:'სახელი', amount:'თანხა', currency:'ვალუტა', date:'თარიღი',
-    day:'რიცხვი', note:'შენიშვნა',
-    // Meetings
-    meet_main:'მთავარი', meet_all:'ყველა', meet_archive:'არქივი',
-    today:'📍 დღეს', next7:'📆 მომდევნო 7 დღე', flexible:'🔄 მოქნილი',
-    // Auto
-    dashboard:'📊 დეშბორდი', services:'🔧 სერვისები',
-    fuel:'⛽ საწვავი', history:'📋 ისტორია',
-    health:'❤️ მანქანის ჯანმრთელობა',
-    mileage:'გარბენი', next_service:'შემდეგი სერვისი',
-    for_100:tr('for_100'),
-    // Settings
-    account:'ანგარიში', security:'უსაფრთხოება',
-    change_pw:'🔐 პაროლის შეცვლა', logout:'🚪 გამოსვლა',
-    notifications:'შეტყობინებები', push_notif:'🔔 Push შეტყობინებები',
-    enabled:'ჩართულია ✅', disabled:'გამორთულია', enable:'ჩართვა',
-    data_backup:'მონაცემების სარეზერვო ასლი',
-    export:'📤 ექსპორტი', import:'📥 იმპორტი',
-    language:'🌐 ენა', reset:'🗑 გადატვირთვა',
-    // Feedback
-    feedback_title:'შეცდომა / იდეა',
-    topic:'თემა', type:'ტიპი', description:'აღწერა',
-    send:'გაგზავნა',
-    // Common
-    no_data:'მონაცემი არ არის', loading:'იტვირთება...',
-    confirm_delete:'დარწმუნებული ხარ?', yes:'კი', no:'არა',
-    saved:'✅ შენახულია', deleted:'🗑 წაიშალა', added:'✅ დამატებულია',
-    error:'⚠️ შეცდომა', success:'✅ წარმატება',
-    version:'ვერსია',
-  },
-  en: {
-    personal:'Personal', meetings:'Meetings', auto:'Auto', idea:'Ideas',
-    manager:'Manager', main:'Main', month:'Month', expenses:'Expenses',
-    purchases:'Purchases', archive:'Archive', settings:'⚙️',
-    balance:'Balance', income:'Income', expense:'Expense',
-    quick_pay:'Quick Payment',
-    monthly_income:'Monthly Income',
-    loans:'Loans', fixed_exp:'Fixed Expenses',
-    utilities:'Utilities — This Month',
-    one_time_inc:'One-time Income',
-    one_time_exp:'One-time Expenses',
-    planned_purch:'Planned Purchases',
-    add:'+ Add', save:'✓ Save', cancel:'Cancel',
-    delete:'Delete', close:'Close',
-    name:'Name', amount:'Amount', currency:'Currency', date:'Date',
-    day:'Day', note:'Note',
-    meet_main:'Main', meet_all:'All', meet_archive:'Archive',
-    today:'📍 Today', next7:'📆 Next 7 Days', flexible:'🔄 Flexible',
-    dashboard:'📊 Dashboard', services:'🔧 Services',
-    fuel:'⛽ Fuel', history:'📋 History',
-    health:'❤️ Car Health',
-    mileage:'Mileage', next_service:'Next Service',
-    for_100:'Required for 100%:',
-    account:'Account', security:'Security',
-    change_pw:'🔐 Change Password', logout:'🚪 Logout',
-    notifications:'Notifications', push_notif:'🔔 Push Notifications',
-    enabled:'Enabled ✅', disabled:'Disabled', enable:'Enable',
-    data_backup:'Data Backup',
-    export:'📤 Export', import:'📥 Import',
-    language:'🌐 Language', reset:'🗑 Reset',
-    feedback_title:'Bugs / Ideas',
-    topic:'Topic', type:'Type', description:'Description',
-    send:'Send',
-    no_data:'No data', loading:'Loading...',
-    confirm_delete:'Are you sure?', yes:'Yes', no:'No',
-    saved:'✅ Saved', deleted:'🗑 Deleted', added:'✅ Added',
-    error:'⚠️ Error', success:'✅ Success',
-    version:'Version',
-  },
-  ru: {
-    personal:'Личное', meetings:'Встречи', auto:'Авто', idea:'Идеи',
-    manager:'Менеджер', main:'Главная', month:'Месяц', expenses:'Расходы',
-    purchases:'Покупки', archive:'Архив', settings:'⚙️',
-    balance:'Баланс', income:'Доход', expense:'Расход',
-    quick_pay:'Быстрый платёж',
-    monthly_income:'Ежемесячный доход',
-    loans:'Кредиты', fixed_exp:'Постоянные расходы',
-    utilities:'Коммунальные — этот месяц',
-    one_time_inc:'Разовый доход',
-    one_time_exp:'Разовые расходы',
-    planned_purch:'Запланированные покупки',
-    add:'+ Добавить', save:'✓ Сохранить', cancel:'Отмена',
-    delete:'Удалить', close:'Закрыть',
-    name:'Название', amount:'Сумма', currency:'Валюта', date:'Дата',
-    day:'Число', note:'Заметка',
-    meet_main:'Главная', meet_all:'Все', meet_archive:'Архив',
-    today:'📍 Сегодня', next7:'📆 Следующие 7 дней', flexible:'🔄 Гибко',
-    dashboard:'📊 Панель', services:'🔧 Сервисы',
-    fuel:'⛽ Топливо', history:'📋 История',
-    health:'❤️ Здоровье авто',
-    mileage:'Пробег', next_service:'Следующий сервис',
-    for_100:'Для 100% необходимо:',
-    account:'Аккаунт', security:'Безопасность',
-    change_pw:'🔐 Изменить пароль', logout:'🚪 Выйти',
-    notifications:'Уведомления', push_notif:'🔔 Push уведомления',
-    enabled:'Включено ✅', disabled:'Отключено', enable:'Включить',
-    data_backup:'Резервная копия данных',
-    export:'📤 Экспорт', import:'📥 Импорт',
-    language:'🌐 Язык', reset:'🗑 Сброс',
-    feedback_title:'Ошибки / Идеи',
-    topic:'Тема', type:'Тип', description:'Описание',
-    send:'Отправить',
-    no_data:'Нет данных', loading:'Загрузка...',
-    confirm_delete:'Вы уверены?', yes:'Да', no:'Нет',
-    saved:'✅ Сохранено', deleted:'🗑 Удалено', added:'✅ Добавлено',
-    error:'⚠️ Ошибка', success:'✅ Успешно',
-    version:'Версия',
-  }
-};
-
-let currentLang = 'ka';
-function tr(key){ return (LANGS[currentLang]||LANGS.ka)[key] || (LANGS.ka)[key] || key; }
-function setLang(lang){
-  currentLang = lang;
-  db.lang = lang;
-  save();
-  applyLang();
-  renderAll();
-}
-
-function applyLang(){
-  // bottom nav
-  const bnavLabels={bnavP:tr('personal'),bnavM:tr('meetings'),bnavA:tr('auto'),bnavF:tr('idea')};
-  Object.entries(bnavLabels).forEach(([id,label])=>{
-    const el=document.getElementById(id);
-    if(el){const lbl=el.querySelector('.bnav-lbl');if(lbl)lbl.textContent=label;}
-  });
-
-  // personal tabs
-  const tabLabels=[tr('main'),tr('month'),tr('expenses'),tr('purchases'),tr('archive'),tr('settings')];
-  document.querySelectorAll('#scApp .tab').forEach((tab,i)=>{if(tabLabels[i])tab.textContent=tabLabels[i];});
-
-  // meetings tabs
-  const mTabLabels=[tr('meet_main'),tr('meet_all'),tr('meet_archive')];
-  document.querySelectorAll('#sheetMeetings .tab').forEach((tab,i)=>{if(mTabLabels[i])tab.textContent=mTabLabels[i];});
-
-  // auto tabs - dashboard, services, fuel, history
-  const aTabLabels=[tr('dashboard'),tr('services'),tr('fuel'),tr('history')];
-  document.querySelectorAll('#sheetAuto .tab, #sheetCarDetail .tab').forEach((tab,i)=>{if(aTabLabels[i])tab.textContent=aTabLabels[i];});
-
-  // version labels
-  document.querySelectorAll('.ver-lbl').forEach(el=>el.textContent='Personal Manager V_1.4');
-
-  // auth screen
-  const pwSub=document.getElementById('pwSub');
-  if(pwSub&&pwSub.textContent===LANGS.ka.loading||pwSub&&pwSub.textContent==='შედი შენს ანგარიშში'){
-    // keep as is during loading
-  }
-
-  // section titles via data-i18n
-  document.querySelectorAll('[data-i18n]').forEach(el=>{
-    const key=el.getAttribute('data-i18n');
-    el.textContent=tr(key);
-  });
-
-  // language selector
-  const langSel=document.getElementById('langSelector');
-  if(langSel) langSel.value=currentLang;
-
-  // modal titles
-  const modalTitlesMap={
-    'mAddMI':{ka:'💰 შემოსავლის დამატება',en:'💰 Add Income',ru:'💰 Добавить доход'},
-    'mAddOTI':{ka:'⚡ ერთჯერადი შემოსავალი',en:'⚡ One-time Income',ru:'⚡ Разовый доход'},
-    'mAddOTE':{ka:'💸 ერთჯერადი ხარჯი',en:'💸 One-time Expense',ru:'💸 Разовый расход'},
-    'mAddP':{ka:'🛒 შესყიდვის დამატება',en:'🛒 Add Purchase',ru:'🛒 Добавить покупку'},
-    'mAddLoan':{ka:'🏦 სესხის დამატება',en:'🏦 Add Loan',ru:'🏦 Добавить кредит'},
-    'mAddFixed':{ka:'📌 ფიქსირებული ხარჯი',en:'📌 Add Fixed Expense',ru:'📌 Добавить расход'},
-    'mAddMeet':{ka:'📅 შეხვედრის დამატება',en:'📅 Add Meeting',ru:'📅 Добавить встречу'},
-    'modalQuickPay':{ka:'💸 სწრაფი გადახდა',en:'💸 Quick Payment',ru:'💸 Быстрый платёж'},
-    'mAddCar':{ka:'🚗 მანქანის დამატება',en:'🚗 Add Car',ru:'🚗 Добавить авто'},
-    'modalAddService':{ka:'🔧 სერვისის დამატება',en:'🔧 Add Service',ru:'🔧 Добавить сервис'},
-    'modalAddFuel':{ka:'⛽ საწვავის შეყვანა',en:'⛽ Add Fuel',ru:'⛽ Добавить топливо'},
-  };
-  Object.entries(modalTitlesMap).forEach(([id,titles])=>{
-    const modal=document.getElementById(id);
-    if(modal){const mt=modal.querySelector('.mt');if(mt)mt.textContent=titles[currentLang]||titles.ka;}
-  });
-
-  // quick pay button text
-  const qpBtns=document.querySelectorAll('button[onclick="openQuickPay()"] span');
-  qpBtns.forEach(sp=>{if(sp.textContent&&sp.textContent.length>3)sp.textContent=tr('quick_pay');});
-}
 
 const GEO=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];
 const CS={GEL:'₾',USD:'$',EUR:'€'};
